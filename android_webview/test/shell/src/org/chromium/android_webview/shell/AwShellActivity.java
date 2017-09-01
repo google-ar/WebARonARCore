@@ -87,6 +87,7 @@ import android.speech.RecognitionListener;
 import android.webkit.JavascriptInterface;
 
 import com.google.atap.tangoservice.Tango;
+import com.google.atap.tangoservice.SupportedDevices;
 
 /**
  * This is a lightweight activity for tests that only require WebView functionality.
@@ -425,7 +426,19 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // TangoJniNative.initialize();
+        // If the device is not supported, show an alert and quit.
+        if (!SupportedDevices.isSupported(this)) 
+        {
+            createAlertDialog(AwShellActivity.this, "ERROR", "This device is not currently supported by WebARonARCore. Sorry.", new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which)
+                    {
+                        AwShellActivity.this.finish();
+                    }
+                }, 1, "Ok", null, null).show();
+            return;
+        }
 
         requestPermissions();
         // requestADFPermission();
@@ -434,6 +447,7 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
         Display display = windowManager.getDefaultDisplay();
         Camera.CameraInfo info = new Camera.CameraInfo();
         Camera.getCameraInfo(CAMERA_ID, info);
+
         TangoJniNative.onCreate(this, display.getRotation(), info.orientation);
 
         CommandLine.init(new String[] { "chrome", "--ignore-gpu-blacklist", "--enable-webvr", "--enable-blink-features=ScriptedSpeech" });

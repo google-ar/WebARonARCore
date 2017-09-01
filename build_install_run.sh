@@ -34,7 +34,7 @@ BRANCH_NAME=${BRANCH_NAME:-HEAD}
 # Try to identify if goma is being used to
 # a) Make sure the proxy is running.
 # b) Use goma in the ninja command below
-USE_GOMA=`grep "use_goma" out/$BRANCH_NAME/args.gn | head -1`
+USE_GOMA=`grep "use_goma" out/build/args.gn | head -1`
 if [ ! -z "$USE_GOMA" ]; then
 	# TODO: This parsing takes care of just the first occurrence of use_gome in the file, but what if there are more than one, some with a comment? It is really a corner case so we won't take it into account for now.
 	COMMENT_POS_IN_USE_GOMA=`echo "$USE_GOMA" | grep -b -o "#" | head -1 | cut -d: -f1`
@@ -55,7 +55,7 @@ if [ ! -z "$USE_GOMA" ]; then
 		python "$GOMA_DIR/goma_ctl.py" ensure_start
 	else
 		# TODO: Identify and use the non-commented-out path to goma from the args.gn file (goma_dir)
-		# GOMA_DIR=`grep "goma_dir" out/$BRANCH_NAME/args.gn`
+		# GOMA_DIR=`grep "goma_dir" out/build/args.gn`
 		if [ -z "$GOMA_DIR" ]; then
 			python "~/goma/goma_ctl.py" ensure_start
 		fi
@@ -92,17 +92,17 @@ if [ $? -eq 0 ]; then
 
 	# Prepare the build
 	echo "Regenerating ninja files from GN..."
-	gn gen "out/$BRANCH_NAME"
+	gn gen out/build
 	if [ $? -eq 0 ]; then
 		echo "Regenerated!"
-		echo "Building $APK_TYPE for Android at 'out/$BRANCH_NAME' folder..."
+		echo "Building $APK_TYPE for Android at 'out/build' folder..."
 		NINJA_RESULT=0
 		# The ninja command is different if using goma
 		if [ -z "$USE_GOMA" ]; then
-			ninja -C "out/$BRANCH_NAME" "$APK_TYPE"
+			ninja -C out/build "$APK_TYPE"
 			NINJA_RESULT=$?
 		else
-			ninja -C "out/$BRANCH_NAME" -j 320 "$APK_TYPE"
+			ninja -C out/build -j 320 "$APK_TYPE"
 			NINJA_RESULT=$?
 		fi
 		if [ $NINJA_RESULT -eq 0 ]; then
@@ -111,9 +111,9 @@ if [ $? -eq 0 ]; then
 			# Copy the final APK to the apk folder
 			rm -rf apk 
 			mkdir apk
-			cp "out/$BRANCH_NAME/apks/AndroidWebView.apk" apk/WebARonARCore.apk
+			cp "out/build/apks/AndroidWebView.apk" apk/WebARonARCore.apk
 			echo "Installing $APK_TYPE on Android device..."
-			adb install -r "out/$BRANCH_NAME/apks/$APK_FILE_NAME.apk"
+			adb install -r "out/build/apks/$APK_FILE_NAME.apk"
 			if [ $? -eq 0 ]; then
 				echo "Installed!"
 				adb shell pm grant "$APP_CLASSPATH" android.permission.CAMERA

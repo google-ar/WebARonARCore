@@ -73,8 +73,8 @@ We recommend you follow the following steps.
 7. Fetch the newly added remote: `git fetch github`
 8. Checkout the webarcore branch from the github remote: `git checkout --track github/webarcore_57.0.2987.5`
 9. Synchronize the dependencies with this command: `~/chromium/src$ gclient sync --disable-syntax-validation`. **Note**: This process may take some time too.
-10. Create a folder where to make the final product compilation: `~/chromium/src$ mkdir -p out/master` (you will need to create a folder matching the name of your branch, in this case `webarcore_57.0.2987.5`).
-11. Create and edit a new file `out/webarcore_57.0.2987.5/args.gn`. Copy and paste the following content in the `args.gn` file:
+10. Create a folder where to make the final product compilation: `~/chromium/src$ mkdir -p out/build`.
+11. Create and edit a new file `out/build/args.gn`. Copy and paste the following content in the `args.gn` file:
 ```
   target_os = "android"
   target_cpu = "arm64"
@@ -86,7 +86,7 @@ We recommend you follow the following steps.
   enable_nacl = false
   remove_webcore_debug_symbols = true
 ```
-12. Prepare to build: `~/chromium/src$ gn args out/webarcore_57.0.2987.5`. **Note**: once the command is executed, the vi editor will show you the content of the `args.gn` file just edited a few steps before. Just exit by pressing ESC and typing colon and `x`.
+12. Prepare to build: `~/chromium/src$ gn args out/build`. **Note**: once the command is executed, the vi editor will show you the content of the `args.gn` file just edited a few steps before. Just exit by pressing ESC and typing colon and `x`.
 13. Install the build dependencies: `~/chromium/src$ build/install-build-deps-android.sh`
 14. Synchronize the resources once again: `~/chromium/src$ gclient sync --disable-syntax-validation`
 15. Setup the environment: `~/chromium/src$ . build/android/envsetup.sh`
@@ -99,10 +99,10 @@ The line below not only compiles Chromium but also installs the final APK on to 
 ```
 You can review the content of the script to see what it does (it is a fairly simple script) but if you would like to compile the final APK on your own you could do it by executing the following command:
 ```
-~/chromium/src$ ninja -C out/webarcore_57.0.2987.5
+~/chromium/src$ ninja -C out/build
 ```
 
-The final APK will be built in the folder `~/chromium/src/out/webarcore_57.0.2987.5/apks`.
+The final APK will be built in the folders `~/chromium/src/apk` and `~/chromium/src/out/build/apks`.
 
 ## <a name="ViewingExamples">Viewing examples</a>
 A [list of examples](https://developers.google.com/ar/develop/web/getting-started#examples) is available at [developers.google.com](https://developers.google.com/ar/develop/web/getting-started#examples).
