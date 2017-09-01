@@ -429,7 +429,7 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
         // If the device is not supported, show an alert and quit.
         if (!SupportedDevices.isSupported(this)) 
         {
-            createAlertDialog(AwShellActivity.this, "ERROR", "This device is not currently supported by WebARonARCore. Sorry.", new DialogInterface.OnClickListener()
+            createAlertDialog(AwShellActivity.this, "ERROR", "This device is not currently supported by WebARonARCore.", new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which)
