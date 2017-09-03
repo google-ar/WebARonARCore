@@ -38,7 +38,8 @@ class VRDisplayImpl : public mojom::VRDisplay {
   void CreateAnchor(const std::vector<float>& modelMatrix,
                     const CreateAnchorCallback& callback) override;
   void RemoveAnchor(uint32_t identifier) override;
-
+  void GetMarkers(unsigned markerType, float markerSize, 
+                  const GetMarkersCallback& callback) override;
   void RequestPresent(bool secure_origin,
                       const RequestPresentCallback& callback) override;
   void ExitPresent() override;

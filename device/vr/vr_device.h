@@ -32,6 +32,7 @@ class DEVICE_VR_EXPORT VRDevice {
   virtual mojom::VRAnchorPtr CreateAnchor(
     const std::vector<float>& modelMatrix) = 0;
   virtual void RemoveAnchor(uint32_t identifier) = 0;
+  virtual std::vector<mojom::VRMarkerPtr> GetMarkers(unsigned markerType, float markerSize) = 0;
 
   virtual void RequestPresent(const base::Callback<void(bool)>& callback) = 0;
   virtual void SetSecureOrigin(bool secure_origin) = 0;

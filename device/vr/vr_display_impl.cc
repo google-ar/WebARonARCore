@@ -88,6 +88,16 @@ void VRDisplayImpl::RemoveAnchor(uint32_t identifier) {
   }
 }
 
+void VRDisplayImpl::GetMarkers(unsigned markerType, float markerSize, 
+                               const GetMarkersCallback& callback) {
+  if (!device_->IsAccessAllowed(this)) {
+    callback.Run(std::vector<mojom::VRMarkerPtr>());
+    return;
+  }
+
+  callback.Run(device_->GetMarkers(markerType, markerSize));
+}
+
 void VRDisplayImpl::RequestPresent(bool secure_origin,
                                    const RequestPresentCallback& callback) {
   if (!device_->IsAccessAllowed(this)) {

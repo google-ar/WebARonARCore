@@ -63,18 +63,19 @@ if (current_cpu == "arm" || current_cpu == "arm64") {
         "../../third_party/tango/libtango_client_api",
         "../../third_party/tango/libtango_client_api2",
         "../../third_party/tango/libtango_support",
-        "../../third_party/glm/"
+        "../../third_party/glm/",
+        "../../third_party/tango/libtango_markers"
       ]
 
       ldflags += [
         "-L../../third_party/tango/libtango_chromium/arm64-v8a",
         "-ltango_chromium",
-#        "-L../../third_party/tango/libtango_client_api/arm64-v8a",
-#        "-ltango_client_api",
         "-L../../third_party/tango/libtango_client_api2/arm64-v8a",
         "-ltango_client_api2",
         "-L../../third_party/tango/libtango_support/arm64-v8a",
-        "-ltango_support"
+        "-ltango_support",
+        "-L../../third_party/tango/libtango_markers/arm64-v8a",
+        "-ltango_markers"
       ]
 
     }

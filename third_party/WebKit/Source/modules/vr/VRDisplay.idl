@@ -41,6 +41,7 @@ enum VREye {
     VRAnchor createAnchor(Float32Array modelMatrix);
     void removeAnchor(VRAnchor anchor);
     sequence<VRAnchor> getAnchors();
+    sequence<VRMarker> getMarkers(long type, float size);
 
     attribute double depthNear;
     attribute double depthFar;

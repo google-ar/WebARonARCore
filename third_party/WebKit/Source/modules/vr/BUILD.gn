@@ -38,7 +38,9 @@ blink_modules_sources("vr") {
     "VRAnchor.cpp",
     "VRAnchor.h",
     "VRAnchorEvent.cpp",
-    "VRAnchorEvent.h"
+    "VRAnchorEvent.h",
+    "VRMarker.cpp",
+    "VRMarker.h"
   ]
 
   deps = [

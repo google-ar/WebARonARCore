@@ -35,6 +35,26 @@ LOCAL_SRC_FILES := \
 include $(PREBUILT_SHARED_LIBRARY)
 
 # ==========================================================
+# tango_markers
+# ==========================================================
+LOCAL_PATH := ../../../../../third_party/tango/libtango_markers/arm64-v8a
+include $(CLEAR_VARS)
+LOCAL_MODULE := tango_markers
+LOCAL_SRC_FILES := \
+	libtango_markers.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+# ==========================================================
+# arcore_camera_utility
+# ==========================================================
+LOCAL_PATH := ../../../../../third_party/tango/libarcore_camera_utility/arm64-v8a
+include $(CLEAR_VARS)
+LOCAL_MODULE := arcore_camera_utility
+LOCAL_SRC_FILES := \
+	libarcore_camera_utility.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+# ==========================================================
 # tango_chromium
 # ==========================================================
 LOCAL_PATH := .
@@ -45,13 +65,16 @@ LOCAL_C_INCLUDES := \
 	../../../../../third_party/tango/libtango_client_api \
 	../../../../../third_party/tango/libtango_client_api2 \
 	../../../../../third_party/tango/libtango_support \
+	../../../../../third_party/tango/libtango_markers \
+	../../../../../third_party/tango/libarcore_camera_utility \
 	../../../../../third_party/glm
+
 LOCAL_SRC_FILES := TangoHandler.cpp \
                    TangoHandlerJNIInterface.cpp \
                    Anchor.cpp \
                    AnchorManager.cpp \
                    MathUtils.cpp
 LOCAL_CFLAGS := -std=gnu++11 -Werror -fexceptions
-LOCAL_SHARED_LIBRARIES := tango_client_api2 tango_support
+LOCAL_SHARED_LIBRARIES := arcore_camera_utility tango_client_api2 tango_support tango_markers
 LOCAL_LDLIBS := -llog -landroid -lGLESv2 -lEGL
 include $(BUILD_SHARED_LIBRARY)

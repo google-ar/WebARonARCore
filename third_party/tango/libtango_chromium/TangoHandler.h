@@ -20,6 +20,7 @@
 #include "tango_client_api.h"   // NOLINT
 #include "tango_client_api2.h"   // NOLINT
 #include "tango_support.h"  // NOLINT
+#include "tango_markers.h"  // NOLINT
 
 #include <ctime>
 
@@ -31,10 +32,18 @@
 #include <unordered_map>
 
 #include <mutex>
+#include <shared_mutex>
+#include <thread>
+#include <condition_variable>
+
+#include <chrono>
 
 #include "AnchorManager.h"
 
 namespace tango_chromium {
+
+typedef std::chrono::system_clock clock;
+typedef std::chrono::time_point < clock, std::chrono::milliseconds > time_type;
 
 class Hit
 {
@@ -68,6 +77,54 @@ public:
     const std::vector<std::shared_ptr<Anchor>>& anchors) = 0;
 };
 
+class Marker
+{
+public:
+  Marker(TangoMarkers_MarkerType type, int id, const std::string& content, const double* position, const double* orientation, const float* modelMatrix): type(type), id(id), content(content)
+  {
+    memcpy(this->position, position, sizeof(this->position));
+    memcpy(this->orientation, orientation, sizeof(this->orientation));
+    memcpy(this->modelMatrix, modelMatrix, sizeof(this->modelMatrix));
+  }
+
+  TangoMarkers_MarkerType getType() const
+  {
+    return type;
+  }
+
+  int getId() const
+  {
+    return id;
+  }
+
+  std::string getContent() const
+  {
+    return content;
+  }
+
+  const double* getPosition() const
+  {
+    return position;
+  }
+
+  const double* getOrientation() const
+  {
+    return orientation;
+  }
+
+  const float* getModelMatrix() const
+  {
+    return modelMatrix;
+  }
+
+private:
+  TangoMarkers_MarkerType type;
+  int id;
+  std::string content;
+  double position[3];
+  double orientation[4];
+  float modelMatrix[16];
+};
 
 // TangoHandler provides functionality to communicate with the Tango Service.
 class TangoHandler {
@@ -82,12 +139,12 @@ public:
 
   ~TangoHandler();
 
-  void onCreate(JNIEnv* env, jobject activity, 
-                int activityOrientation, int sensorOrientation);
+  void onCreate(JNIEnv* env, jobject activity, int activityOrientation, int sensorOrientation);
   void onTangoServiceConnected(JNIEnv* env, jobject tango);
   void onPause();
   void onDeviceRotationChanged(int activityOrientation, int sensorOrientation);
   void onTangoEventAvailable(const TangoEvent* event);
+  void onFrameAvailable(const TangoImageBuffer* imageBuffer);
 
   bool isConnected() const;
 
@@ -117,12 +174,16 @@ public:
   void removeTangoHandlerEventListener(TangoHandlerEventListener* listener);
   void removeAllTangoHandlerEventListeners();
 
+  bool getMarkers(TangoMarkers_MarkerType markerType, float markerSize, 
+                  std::vector<Marker>& markers);
+
 private:
   void connect();
   void disconnect();
   bool hasLastTangoImageBufferTimestampChangedLately();
-
   bool getPlanes(std::vector<Plane>& planes);
+  void removeThisMarkerDetectionThread();
+  void waitForAllMarkerDetectionThreads();
 
   static TangoHandler* instance;
 
@@ -139,7 +200,12 @@ private:
   uint32_t cameraImageTextureWidth;
   uint32_t cameraImageTextureHeight;
 
-  bool textureIdConnected;
+  bool textureReaderInitialized;
+  TangoImageBuffer cameraImageBuffer;
+  std::mutex textureReaderMutex;
+  std::condition_variable textureReaderCV;
+  size_t textureReadRequestCounter;
+  uint32_t textureReaderTextureId; 
 
   int activityOrientation;
   int sensorOrientation;
@@ -149,6 +215,19 @@ private:
   AnchorManager anchorManager;
 
   std::vector<TangoHandlerEventListener*> listeners;
+
+  time_type lastGetMarkersCallTime;
+  std::vector<Marker> detectedMarkers;
+  std::mutex detectedMarkersMutex;
+  TangoSupport_ImageBufferManager* imageBufferManager;
+  int imageBufferManagerWidth;
+  int imageBufferManagerHeight;
+  TangoPoseData poseForMarkerDetection;
+  std::mutex poseForMarkerDetectionMutex;
+  bool poseForMarkerDetectionIsCorrect;
+  std::vector<std::thread> markerDetectionThreads;
+  std::mutex markerDetectionThreadsMutex;
+  bool joiningMarkerDetectionThreads; 
 };
 
 }  // namespace tango_chromium

@@ -33,6 +33,8 @@ class GvrDevice : public VRDevice {
   mojom::VRAnchorPtr CreateAnchor(
     const std::vector<float>& modelMatrix) override;
   void RemoveAnchor(uint32_t identifier) override;
+  std::vector<mojom::VRMarkerPtr> GetMarkers(unsigned markerType, 
+                                             float markerSize) override;
 
   void RequestPresent(const base::Callback<void(bool)>& callback) override;
   void SetSecureOrigin(bool secure_origin) override;

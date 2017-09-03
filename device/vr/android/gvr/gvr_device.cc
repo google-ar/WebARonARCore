@@ -246,6 +246,11 @@ mojom::VRAnchorPtr GvrDevice::CreateAnchor(
 void GvrDevice::RemoveAnchor(uint32_t identifier) {
 }
 
+std::vector<mojom::VRMarkerPtr> GvrDevice::GetMarkers(unsigned markerType, float markerSize) {
+  std::vector<mojom::VRMarkerPtr> markers;
+  return markers;
+}
+
 void GvrDevice::RequestPresent(const base::Callback<void(bool)>& callback) {
   gvr_provider_->RequestPresent(callback);
 }

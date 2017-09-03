@@ -19,6 +19,7 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
+#include <GLES2/gl2ext.h>
 
 #include <cassert>
 
@@ -30,23 +31,34 @@
 
 #include <thread>
 
+#include "glm.hpp"
 #include "gtc/type_ptr.hpp"
 #include "gtx/transform.hpp"
 #include "gtx/quaternion.hpp"
 
 #include "MathUtils.h"
 #include "LogUtils.h"
+#include "camera_utility.h"
+
+using namespace glm;
 
 namespace tango_chromium {
 
-const int kVersionStringLength = 128;
+constexpr int kVersionStringLength = 128;
 // The minimum Tango Core version required from this application.
-const int kTangoCoreMinimumVersion = 9377;
+constexpr int kTangoCoreMinimumVersion = 9377;
+
+constexpr long kMarkerDetectionFPS = 30;
 
 const float ANDROID_WEBVIEW_ADDRESS_BAR_HEIGHT = 125;
 
 void onTextureAvailable(void* context, TangoCameraId tangoCameraId) {
   // Do nothing for now.
+}
+
+void onFrameAvailable(void* context, TangoCameraId tangoCameraId, 
+                      const TangoImageBuffer* imageBuffer) {
+  tango_chromium::TangoHandler::getInstance()->onFrameAvailable(imageBuffer);
 }
 
 void onTangoEventAvailable(void* context, const TangoEvent* event) {
@@ -91,12 +103,19 @@ TangoHandler::TangoHandler(): connected(false)
   , cameraImageHeight(0)
   , cameraImageTextureWidth(0)
   , cameraImageTextureHeight(0)
-  , textureIdConnected(false) {
-  // SS means Start of Service: this matrix does the conversion from Start of Service transform
-  // to OpenGL (tango-space has z as the up-vector, not y).
+  , textureReaderInitialized(false)
+  , textureReaderTextureId(0)
+  , imageBufferManager(nullptr)
+  , poseForMarkerDetectionIsCorrect(false)
+  , textureReadRequestCounter(0)
+  , joiningMarkerDetectionThreads(false) {
+  // SS means Start of Service: this matrix does the conversion from Start 
+  // of Service transform to OpenGL (tango-space has z as the up-vector, not y).
   float ss_t_gl[16] = {1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1};
-  SS_T_GL = glm::make_mat4(ss_t_gl);
-  SS_T_GL_INV = glm::inverse(SS_T_GL);
+  SS_T_GL = make_mat4(ss_t_gl);
+  SS_T_GL_INV = inverse(SS_T_GL);
+  lastGetMarkersCallTime = 
+    std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
 }
 
 TangoHandler::~TangoHandler() {
@@ -104,7 +123,8 @@ TangoHandler::~TangoHandler() {
   tangoConfig = nullptr;
 }
 
-void TangoHandler::onCreate(JNIEnv* env, jobject activity, int activityOrientation, int sensorOrientation) {
+void TangoHandler::onCreate(JNIEnv* env, jobject activity, 
+                            int activityOrientation, int sensorOrientation) {
   this->activityOrientation = activityOrientation;
   this->sensorOrientation = sensorOrientation;
 }
@@ -236,24 +256,53 @@ void TangoHandler::connect() {
     std::exit(EXIT_SUCCESS);
   }
 
+  imageBufferManagerWidth = tangoCameraIntrinsics.width;
+  imageBufferManagerHeight = tangoCameraIntrinsics.height;
+  result = TangoSupport_createImageBufferManager(
+      TANGO_HAL_PIXEL_FORMAT_YCrCb_420_SP, imageBufferManagerWidth,
+      imageBufferManagerHeight, &imageBufferManager);
+  if (result != TANGO_SUCCESS) {
+    LOGE("TangoHandler::connect, failed to create image buffer manager with error code: %d", result);
+    std::exit(EXIT_SUCCESS);
+  }
+
+  // Do not use this for now. ARCore is providing an incorrect image buffer. Using
+  // Harry Wang's camera utility library to try to get the camera image. 
+  // result = TangoService_connectOnFrameAvailable(TANGO_CAMERA_COLOR, this, ::onFrameAvailable);
+  // if (result != TANGO_SUCCESS)
+  // {
+  //   LOGE("TangoHandler::connect, failed to connect frame callback with error code: %d", result);
+  //   std::exit(EXIT_SUCCESS);
+  // }
+
   // Initialize TangoSupport context.
   TangoSupport_initialize(TangoService_getPoseAtTime,
                           TangoService_getCameraIntrinsics);
 
   connected = true;
 
+  // Setup the camera image buffer to be ready to start storing the video frames.
+  cameraImageBuffer.data = 0;
+  cameraImageBuffer.stride = tangoCameraIntrinsics.width;
+  cameraImageBuffer.format = TANGO_HAL_PIXEL_FORMAT_YCrCb_420_SP;
+  cameraImageBuffer.width = imageBufferManagerWidth;
+  cameraImageBuffer.height = imageBufferManagerHeight;
+
   // Update camera intrinsics after connection which will take into account
   // device rotation
   this->updateCameraIntrinsics();
 }
 
-void TangoHandler::disconnect() {
+void TangoHandler::disconnect() {  
+  waitForAllMarkerDetectionThreads();
+
+  TangoSupport_freeImageBufferManager(imageBufferManager);
+  imageBufferManager = nullptr;
+
   TangoService_disconnect();
 
   cameraImageWidth = cameraImageHeight =
     cameraImageTextureWidth = cameraImageTextureHeight = 0;
-
-  textureIdConnected = false;
 
   connected = false;
 }
@@ -262,7 +311,8 @@ void TangoHandler::onPause() {
   disconnect();
 }
 
-void TangoHandler::onDeviceRotationChanged(int activityOrientation, int sensorOrientation) {
+void TangoHandler::onDeviceRotationChanged(int activityOrientation, 
+                                           int sensorOrientation) {
   LOGE("TangoHandler::onDeviceRotationChanged; activityOrientation=%d, sensorOrientation=%d",
     activityOrientation, sensorOrientation);
   this->activityOrientation = activityOrientation;
@@ -280,14 +330,14 @@ void TangoHandler::onTangoEventAvailable(const TangoEvent* event) {
       {
         double historyChangeTimestamp = *((double*)event->event_value);
 
-        LOGI("JUDAX: TangoHandler::onTangoEventAvailable -> EXPERIMENTAL_PoseHistoryChanged: historyChangeTimestamp = %lf", historyChangeTimestamp);
+        // LOGI("JUDAX: TangoHandler::onTangoEventAvailable -> EXPERIMENTAL_PoseHistoryChanged: historyChangeTimestamp = %lf", historyChangeTimestamp);
 
         std::vector<std::shared_ptr<Anchor>> updatedAnchors = 
             anchorManager.update(historyChangeTimestamp, activityOrientation);
         if (!updatedAnchors.empty())
         {
 
-          LOGI("JUDAX: TangoHandler::onTangoEventAvailable -> updatedAnchors.size() = %ld", updatedAnchors.size());
+          // LOGI("JUDAX: TangoHandler::onTangoEventAvailable -> updatedAnchors.size() = %ld", updatedAnchors.size());
 
           for (auto listener: listeners)
           {
@@ -300,8 +350,29 @@ void TangoHandler::onTangoEventAvailable(const TangoEvent* event) {
   }
 }
 
-bool TangoHandler::isConnected() const
-{
+void TangoHandler::onFrameAvailable(const TangoImageBuffer* imageBuffer) {
+  // In LeTango, the frame that is passed is not full resolution. If the created image
+  // buffer manager does not match, a crash will occur. This check handles that case
+  // to recreate the image buffer manager to the correct image buffer size.
+  if (imageBuffer->width != imageBufferManagerWidth || 
+    imageBuffer-> height != imageBufferManagerHeight)
+  {
+    imageBufferManagerWidth = imageBuffer->width;
+    imageBufferManagerHeight = imageBuffer->height;
+    TangoSupport_freeImageBufferManager(imageBufferManager);
+    TangoErrorType result = TangoSupport_createImageBufferManager(
+        TANGO_HAL_PIXEL_FORMAT_YCrCb_420_SP, imageBufferManagerWidth,
+        imageBufferManagerHeight, &imageBufferManager);
+    if (result != TANGO_SUCCESS) {
+      LOGE("TangoHandler::onFrameAvailable, failed to create image buffer manager with error code: %d", result);
+      std::exit(EXIT_SUCCESS);
+    }
+  }
+
+  TangoSupport_updateImageBuffer(imageBufferManager, imageBuffer);
+}
+
+bool TangoHandler::isConnected() const{
   return connected;
 }
 
@@ -309,9 +380,9 @@ bool TangoHandler::getPose(TangoPoseData* tangoPoseData) {
   bool result = connected;
   if (connected)
   {
-    double timestamp = hasLastTangoImageBufferTimestampChangedLately() ? lastTangoImageBufferTimestamp : 0.0;
+    lastTangoImageBufferTimestamp = hasLastTangoImageBufferTimestampChangedLately() ? lastTangoImageBufferTimestamp : 0.0;
 
-    // LOGI("JUDAX: TangoHandler::getPose timestamp = %lf", timestamp);
+    // LOGI("JUDAX: TangoHandler::getPose lastTangoImageBufferTimestamp = %lf", lastTangoImageBufferTimestamp);
 
 // For reference purpose: ADF to start of service request parameters.
 // {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
@@ -321,7 +392,7 @@ bool TangoHandler::getPose(TangoPoseData* tangoPoseData) {
 //         TANGO_COORDINATE_FRAME_DEVICE}
 
     result = TangoSupport_getPoseAtTime(
-      timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      lastTangoImageBufferTimestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
       TANGO_SUPPORT_ENGINE_OPENGL,
       static_cast<TangoSupport_Rotation>(activityOrientation), tangoPoseData) == TANGO_SUCCESS;
@@ -329,12 +400,22 @@ bool TangoHandler::getPose(TangoPoseData* tangoPoseData) {
     {
       LOGE("TangoHandler::getPose: Failed to get the pose.");
     }
-
+    else
+    {
+      poseForMarkerDetectionMutex.lock();
+      poseForMarkerDetectionIsCorrect = TangoSupport_getPoseAtTime(
+        lastTangoImageBufferTimestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+        TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+        TANGO_SUPPORT_ENGINE_TANGO, static_cast<TangoSupport_Rotation>(activityOrientation),
+        &poseForMarkerDetection) == TANGO_SUCCESS;
+      poseForMarkerDetectionMutex.unlock();
+    }
   }
   return result;
 }
 
-bool TangoHandler::getProjectionMatrix(float near, float far, float* projectionMatrix) {
+bool TangoHandler::getProjectionMatrix(float near, float far, 
+                                       float* projectionMatrix) {
   if (!connected) return false;
 
   bool result = this->updateCameraIntrinsics();
@@ -366,7 +447,8 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits) {
   {
     TangoPlaneData* planes = 0;
     size_t numberOfPlanes = 0;
-    if (TangoService_Experimental_getPlanes(&planes, &numberOfPlanes) == TANGO_SUCCESS)
+    if (TangoService_Experimental_getPlanes(&planes, &numberOfPlanes) == 
+      TANGO_SUCCESS)
     {
       if (numberOfPlanes == 0) {
         return result;
@@ -426,7 +508,8 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits) {
         glm::vec3 planeNormal = glm::vec3(0, 1, 0);
 
         // Check if the ray intersects the plane.
-        float t = rayIntersectsPlane(planeNormal, planePosition, worldRayOrigin, worldRayDirection);
+        float t = rayIntersectsPlane(planeNormal, planePosition,
+                                     worldRayOrigin, worldRayDirection);
 
         // If t < 0, there is no intersection.
         if (t < 0) {
@@ -463,11 +546,13 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits) {
         glm::vec3 polygonPoints[planeData.boundary_point_num];
         for (int i = 0; i < planeData.boundary_point_num; ++i) {
           polygonPoints[i] = transformVec3ByMat4(
-            glm::vec3((float)planeData.boundary_polygon[i * 2], 0, -(float)planeData.boundary_polygon[(i * 2) + 1]),
+            glm::vec3((float)planeData.boundary_polygon[i * 2], 0, 
+                      -(float)planeData.boundary_polygon[(i * 2) + 1]),
             planeMatrix);
         }
 
-        if(!isPointInPolygon(planeIntersection, polygonPoints, planeData.boundary_point_num)) {
+        if(!isPointInPolygon(planeIntersection, polygonPoints, 
+                             planeData.boundary_point_num)) {
           // The intersection point lies outside the plane polygon, so skip it.
           continue;
         }
@@ -642,8 +727,6 @@ std::shared_ptr<Anchor> TangoHandler::createAnchor(
 
   double timestamp = hasLastTangoImageBufferTimestampChangedLately() ? lastTangoImageBufferTimestamp : 0.0;
 
-  LOGI("JUDAX: TangoHandler::createAnchor -> timestamp = %lf", timestamp);
-
   TangoPoseData tangoPoseData;
   if (TangoSupport_getPoseAtTime(
     timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
@@ -657,18 +740,19 @@ std::shared_ptr<Anchor> TangoHandler::createAnchor(
     anchor = anchorManager.createAnchor(timestamp, 
                                         (const float*)&cameraModelMatrix, 
                                         anchorModelMatrix);
+
+    // TODO: Remove this! For debugging purposes only!
+    std::vector<std::shared_ptr<Anchor>> anchors;
+    anchors.push_back(anchor);
+    for (auto listener: listeners)
+    {
+      listener->anchorsUpdated(anchors);
+    }
+
   }
   else 
   {
     LOGE("ERROR: Could not retrieve the new pose data while creating anchor.");
-  }
-
-  // TODO: Remove this! For debugging purposes only!
-  std::vector<std::shared_ptr<Anchor>> anchors;
-  anchors.push_back(anchor);
-  for (auto listener: listeners)
-  {
-    listener->anchorsUpdated(anchors);
   }
 
   return anchor;
@@ -685,6 +769,7 @@ void TangoHandler::resetPose() {
 void TangoHandler::reset() {
   resetPose();
   anchorManager.removeAllAnchors();
+  waitForAllMarkerDetectionThreads();
 }
 
 bool TangoHandler::updateCameraIntrinsics() {
@@ -765,18 +850,45 @@ bool TangoHandler::updateCameraImageIntoTexture(uint32_t textureId) {
 
   std::time(&lastTangoImagebufferTimestampTime);
 
+  textureReaderMutex.lock();
+  if (!textureReaderInitialized || textureReaderTextureId != textureId)
+  {
+    if (textureReaderInitialized)
+    {
+      TextureReader_release();
+      cameraImageBuffer.data = 0;
+    }
+    TextureReader_initialize(textureId, 
+                             GL_TEXTURE_EXTERNAL_OES, 
+                             tangoCameraIntrinsics.width, 
+                             tangoCameraIntrinsics.height, true);
+    textureReaderInitialized = true;
+    textureReaderTextureId = textureId;
+  }
+
+  if (textureReadRequestCounter > 0) {
+
+    int cameraImageBufferSize;
+    cameraImageBuffer.data = TextureReader_readPixels(&cameraImageBufferSize, IMAGE_FORMAT_YUV420);
+    textureReaderMutex.unlock();
+    // A texture read has been performed. Notify one of the requesters.
+    textureReaderCV.notify_one();
+  }
+  else {
+    textureReaderMutex.unlock();
+  }
+
+
   // LOGI("JUDAX: TangoHandler::updateCameraImageIntoTexture lastTangoImageBufferTimestamp = %lf, result = %d, textureId = %d", lastTangoImageBufferTimestamp, result, textureId);
 
   return result == TANGO_SUCCESS;
 }
 
-int TangoHandler::getSensorOrientation() const
-{
+int TangoHandler::getSensorOrientation() const{
   return sensorOrientation;
 }
 
-int TangoHandler::getActivityOrientation() const
-{
+int TangoHandler::getActivityOrientation() const{
   return activityOrientation;
 }
 
@@ -806,6 +918,201 @@ bool TangoHandler::hasLastTangoImageBufferTimestampChangedLately() {
   std::time_t currentTime;
   std::time(&currentTime);
   return std::difftime(currentTime, lastTangoImagebufferTimestampTime) < 1.0;
+}
+
+void TangoHandler::removeThisMarkerDetectionThread() {
+  if (joiningMarkerDetectionThreads) {
+      markerDetectionThreadsMutex.unlock();
+      return;
+  }
+  std::thread::id thisThreadId = std::this_thread::get_id();
+  std::hash<std::thread::id> threadHasher;
+  std::size_t thisThreadIdHash = threadHasher(thisThreadId);
+  markerDetectionThreadsMutex.lock();
+  auto iter = std::find_if(markerDetectionThreads.begin(), 
+                           markerDetectionThreads.end(), 
+                           [=](std::thread &t) { 
+                             return (t.get_id() == thisThreadId); 
+                           });
+  if (iter != markerDetectionThreads.end())
+  {
+    iter->detach();
+    markerDetectionThreads.erase(iter);
+  }
+  markerDetectionThreadsMutex.unlock();
+}
+
+void TangoHandler::waitForAllMarkerDetectionThreads() {
+  // Disable any read texture.
+  textureReaderMutex.lock();
+  TextureReader_release();
+  textureReaderInitialized = false;
+  cameraImageBuffer.data = 0;
+  textureReaderMutex.unlock();
+  // Marker detection threads might be waiting for the texture to be read so
+  // wake them all up.
+  textureReaderCV.notify_all();
+  // TODO: This is the only place where we can assume that the page has been
+  // realoded so wait for all the marker detection threads to finish.
+  // Using an ugly hack for now to tell the threads that they do not need
+  // to detach because the main thread is joining them. Maybe we can use the
+  // MarkerDetector and MarkerDetectorThreadPool concepts, but they need a 
+  // bit more love.
+  markerDetectionThreadsMutex.lock();
+  joiningMarkerDetectionThreads = true;
+  for (auto& markerDetectionThread: markerDetectionThreads) {
+    if (markerDetectionThread.joinable()) {
+      markerDetectionThread.join();
+    }
+  }
+  // Clear all the threads.
+  markerDetectionThreads.clear();
+  markerDetectionThreadsMutex.unlock();
+  // TODO: Reset the flag that indicates the marker detection threads that the
+  // main thread is no longer waiting to join them.
+  joiningMarkerDetectionThreads = false;
+  // Do also clear all the detected markers.
+  detectedMarkersMutex.lock();
+  detectedMarkers.clear();
+  detectedMarkersMutex.unlock();
+}
+
+bool TangoHandler::getMarkers(TangoMarkers_MarkerType markerType, float markerSize, std::vector<Marker>& markers) {
+  if (connected)
+  {
+
+    time_type currentTime = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
+    long elapsedTimeBetweenGetMarkerCalls = (currentTime - lastGetMarkersCallTime).count();
+
+    // Lock the use of he detectedMarkers vector
+    detectedMarkersMutex.lock();
+
+    // Make a copy of the currently detected markers to the structure that requested them.
+    markers.insert(markers.begin(), detectedMarkers.begin(), detectedMarkers.end());
+    // Now that the detected markers have been copied, clear the list for future requests.
+    detectedMarkers.clear();
+
+    // We are done with the container so unlock the mutex.
+    detectedMarkersMutex.unlock();      
+
+    // Marker detection is a time-consuming process. This is to make sure marker
+    // detection process runs at a frequency no higher than a pre-defined FPS.
+    if (elapsedTimeBetweenGetMarkerCalls < (1000 / kMarkerDetectionFPS))
+    {
+      // If the getMarker call was made too fast, return whatever we've got.
+      return true;
+    }
+
+    // Get the current time as the last time for future request elapsed time calculation.
+    lastGetMarkersCallTime = currentTime;
+
+    // Start a new detection query in a different thread.
+    // Store the thread to be able to "stop" them if needed.
+    std::thread t([this, markerType, markerSize]()
+    {
+    // Get latest image buffer.
+    // TangoImageBuffer* imageBuffer = nullptr;
+    // TangoErrorType status = TangoSupport_getLatestImageBuffer(
+    //     imageBufferManager, &imageBuffer);
+    // if (status == TANGO_SUCCESS)
+    // {
+      TangoMarkers_DetectParam param;
+      param.type = markerType;
+      param.marker_size = markerSize;
+      TangoMarkers_MarkerList markerList;
+      
+      double translation[3];
+      double orientation[4];
+      // Get the translation and orientation from the last pose.
+      poseForMarkerDetectionMutex.lock();
+      memcpy(translation, poseForMarkerDetection.translation, 
+        sizeof(double) * 3);
+      memcpy(orientation, poseForMarkerDetection.orientation, 
+        sizeof(double) * 4);
+      poseForMarkerDetectionMutex.unlock();
+
+      TangoErrorType errorType;
+
+      // Make sure there is camera image buffer data to be able to detect 
+      // markers. 
+      // Both detecting markers and acquiring the camera frame (at least with
+      // the camera read utility library) are very impactful on performance
+      // so this thread will request a frame and wait until the frame is
+      // acquired.
+      // NOTE: The unique_lock locks the mutex in the constructor so we are
+      // safe to work with some variables that should be guarded.
+      std::unique_lock<std::mutex> lock(textureReaderMutex);
+      // If the needed conditions are not met, wait.
+      if (!textureReaderInitialized || !cameraImageBuffer.data) {
+        textureReadRequestCounter++;
+        // Wait until the frame is acquired.
+        textureReaderCV.wait(lock);
+        textureReadRequestCounter--;
+        // If the condition was interrupted and we still do not have what we were
+        // waiting for, just assume that the interruption came from the
+        // disconnect event, and cancel the detection.
+        if (!textureReaderInitialized || !cameraImageBuffer.data) {
+          lock.unlock();
+          removeThisMarkerDetectionThread();
+          return;
+        }
+      }
+      // Detect markers as we are certain we have the needed data.
+      errorType = TangoMarkers_detectMarkers(&cameraImageBuffer, 
+                                             TANGO_CAMERA_COLOR, 
+                                             translation, 
+                                             orientation, 
+                                             &param, 
+                                             &markerList);
+      // Reset the image data so no more texture read are executed until needed.
+      cameraImageBuffer.data = 0;
+      // Finally unlock.
+      lock.unlock();
+
+      if (errorType == TANGO_SUCCESS)
+      {
+        detectedMarkersMutex.lock();
+        detectedMarkers.clear();
+        for (int i = 0; i < markerList.marker_count; ++i)
+        {
+          int id = 0;
+          std::string content;
+          switch(markerType)
+          {
+            case TANGO_MARKERS_MARKER_ARTAG:
+              id = atoi(markerList.markers[i].content);
+              break;
+            case TANGO_MARKERS_MARKER_QRCODE:
+              content = std::string(markerList.markers[i].content, 
+                                    markerList.markers[i].content_size);
+              break;
+          }
+          mat4 modelMatrix = mat4FromTranslationOrientation(
+            markerList.markers[i].translation,
+            markerList.markers[i].orientation);
+          detectedMarkers.push_back(Marker(markerType, id,
+            content, markerList.markers[i].translation,
+            markerList.markers[i].orientation, (float*)&modelMatrix));
+        }
+        detectedMarkersMutex.unlock();
+        TangoMarkers_freeMarkerList(&markerList);
+      }
+      // }
+      // else 
+      // {
+      //   LOGE("ERROR: Could not retrieve the latest image buffer while trying to detect markers.");
+      // }
+
+      // Remove this thread from the markerDetectionThreads container.
+      removeThisMarkerDetectionThread();
+    });
+
+    markerDetectionThreadsMutex.lock();
+    markerDetectionThreads.push_back(std::move(t));
+    markerDetectionThreadsMutex.unlock();
+  }
+
+  return connected;
 }
 
 }  // namespace tango_chromium

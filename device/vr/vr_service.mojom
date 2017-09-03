@@ -46,6 +46,15 @@ struct VRHit {
   array<float, 16> modelMatrix;
 };
 
+struct VRMarker {
+  uint32 type;
+  uint32 id;
+  string content;
+  array<float, 3> position;
+  array<float, 4> orientation;
+  array<float, 16> modelMatrix;
+};
+
 struct VRPassThroughCamera {
   uint32 width;
   uint32 height;
@@ -132,6 +141,8 @@ interface VRDisplay {
   GetPlaneDeltas() => (VRPlaneDeltas deltas);
   [Sync]
   CreateAnchor(array<float, 16> anchorModelMatrix) => (VRAnchor anchor);
+  [Sync]
+  GetMarkers(uint32 markerType, float markerSize) => (array<VRMarker> markers);
 
   RequestPresent(bool secureOrigin) => (bool success);
   ExitPresent();

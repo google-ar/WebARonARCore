@@ -4,6 +4,9 @@
 
 #include "device/vr/android/tango/tango_vr_device.h"
 
+#include "base/bind.h"
+#include "base/task_scheduler/post_task.h"
+
 #include "tango_support.h"
 #include "Anchor.h"
 
@@ -16,6 +19,7 @@ using tango_chromium::TangoHandler;
 using tango_chromium::Hit;
 using tango_chromium::Plane;
 using tango_chromium::PlaneDeltas;
+using tango_chromium::Marker;
 
 const float RAD_2_DEG = 180.0 / M_PI;
 
@@ -306,6 +310,61 @@ void TangoVRDevice::RemoveAnchor(uint32_t identifier) {
   }
 }
 
+std::vector<mojom::VRMarkerPtr> TangoVRDevice::GetMarkers(unsigned markerType, float markerSize) {
+  std::vector<mojom::VRMarkerPtr> mojomMarkers;
+  if (TangoHandler::getInstance()->isConnected())
+  {
+    TangoMarkers_MarkerType mt;
+    switch(markerType)
+    {
+      case 0x1:
+        mt = TANGO_MARKERS_MARKER_ARTAG;
+        break;
+      case 0x2:
+        mt = TANGO_MARKERS_MARKER_QRCODE;
+        break;
+      default:
+        VLOG(0) << "ERROR: Incorrect marker type value. Currently supported values are VRDipslay.MARKER_TYPE_AR and VRDisplay.MARKER_TYPE_QRCODE.";
+        return mojomMarkers;
+    }
+    std::vector<Marker> markers;
+    if (TangoHandler::getInstance()->getMarkers(mt, markerSize, markers))
+    {
+      std::vector<Marker>::size_type size = markers.size();
+      mojomMarkers.resize(size);
+      for (std::vector<Marker>::size_type i = 0; i < size; i++)
+      {
+        mojomMarkers[i] = mojom::VRMarker::New();
+        mojomMarkers[i]->type = markers[i].getType();
+        mojomMarkers[i]->id = markers[i].getId();
+        mojomMarkers[i]->content = markers[i].getContent();
+
+        mojomMarkers[i]->position.resize(3);
+        // Need to convert from double to float :(
+        const double* markerPosition = markers[i].getPosition(); 
+        mojomMarkers[i]->position[0] = markerPosition[0];
+        mojomMarkers[i]->position[1] = markerPosition[1];
+        mojomMarkers[i]->position[2] = markerPosition[2];
+
+        mojomMarkers[i]->orientation.resize(4);
+        const double* markerOrientation = markers[i].getOrientation(); 
+        mojomMarkers[i]->orientation[0] = markerOrientation[0];
+        mojomMarkers[i]->orientation[1] = markerOrientation[1];
+        mojomMarkers[i]->orientation[2] = markerOrientation[2];
+        mojomMarkers[i]->orientation[3] = markerOrientation[3];
+
+        mojomMarkers[i]->modelMatrix.resize(16);
+        const float* modelMatrix = markers[i].getModelMatrix();
+        for (int j = 0; j < 16; j++)
+        {
+          mojomMarkers[i]->modelMatrix[j] = modelMatrix[j];
+        }
+      }
+    }
+  }
+  return mojomMarkers;
+}
+
 void TangoVRDevice::RequestPresent(const base::Callback<void(bool)>& callback) {
   // gvr_provider_->RequestPresent(callback);
 }
@@ -347,6 +406,24 @@ void TangoVRDevice::UpdateLayerBounds(mojom::VRLayerBoundsPtr left_bounds,
 }
 
 void TangoVRDevice::anchorsUpdated(
+  const std::vector<std::shared_ptr<Anchor>>& anchors)
+{
+  anchorsUpdatedInternal(anchors);
+  
+  // TODO: Tried these 2 options and none worked. One compiles/links and the
+  // other just compiles.
+
+  // base::PostTask(FROM_HERE, 
+  //                base::Bind(&TangoVRDevice::anchorsUpdatedInternal, 
+  //                           base::Unretained(this), anchors));
+
+  // content::BrowserThread::PostTask(
+  //     content::BrowserThread::UI, FROM_HERE, 
+  //     base::Bind(&TangoVRDevice::anchorsUpdatedInternal, 
+  //                base::Unretained(this), anchors));
+}
+
+void TangoVRDevice::anchorsUpdatedInternal(
   const std::vector<std::shared_ptr<Anchor>>& anchors)
 {
   std::vector<mojom::VRAnchorPtr> mojomAnchors;

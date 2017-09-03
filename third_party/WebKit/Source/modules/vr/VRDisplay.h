@@ -39,6 +39,7 @@ class VRHit;
 class VRPassThroughCamera;
 class VRPlane;
 class VRAnchor;
+class VRMarker;
 class WebGLRenderingContextBase;
 
 enum VREye { VREyeNone, VREyeLeft, VREyeRight };
@@ -74,6 +75,8 @@ class VRDisplay final : public EventTargetWithInlineData,
   VRAnchor* createAnchor(DOMFloat32Array* modelMatrix);
   void removeAnchor(VRAnchor* anchor);
   HeapVector<Member<VRAnchor>> getAnchors();
+  HeapVector<Member<VRMarker>> getMarkers(unsigned markerType, 
+                                          float markerSize);
 
   double depthNear() const { return m_depthNear; }
   double depthFar() const { return m_depthFar; }

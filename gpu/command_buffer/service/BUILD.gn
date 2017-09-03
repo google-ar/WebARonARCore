@@ -158,7 +158,8 @@ target(link_target_type, "service_sources") {
     "//third_party/tango/libtango_chromium",
     "//third_party/tango/libtango_client_api",
     "//third_party/tango/libtango_client_api2",
-    "//third_party/tango/libtango_support"
+    "//third_party/tango/libtango_support",
+    "//third_party/tango/libtango_markers"
     # WebAR END
   ]
 

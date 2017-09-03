@@ -29,6 +29,7 @@
 #include "modules/vr/VRPlaneEvent.h"
 #include "modules/vr/VRAnchor.h"
 #include "modules/vr/VRAnchorEvent.h"
+#include "modules/vr/VRMarker.h"
 #include "modules/webgl/WebGLRenderingContextBase.h"
 #include "platform/Histogram.h"
 #include "platform/UserGestureIndicator.h"
@@ -369,6 +370,25 @@ void VRDisplay::removeAnchor(VRAnchor* anchor) {
 
 HeapVector<Member<VRAnchor>> VRDisplay::getAnchors() {
   return m_anchors;
+}
+
+HeapVector<Member<VRMarker>> VRDisplay::getMarkers(unsigned markerType, float markerSize)
+{
+  HeapVector<Member<VRMarker>> markers;
+  if (!m_display)
+    return markers;
+  Vector<device::mojom::blink::VRMarkerPtr> mojomMarkers;
+  if (m_display->GetMarkers(markerType, markerSize, &mojomMarkers) && !mojomMarkers.isEmpty())
+  {
+    markers.resize(mojomMarkers.size());
+    for (size_t i = 0; i < mojomMarkers.size(); i++)
+    {
+      VRMarker* marker = new VRMarker();
+      marker->setMarker(mojomMarkers[i]);
+      markers[i] = marker;
+    }
+  }
+  return markers;
 }
 
 VREyeParameters* VRDisplay::getEyeParameters(const String& whichEye) {
