@@ -106,6 +106,7 @@ WebARonARCore is built of two essential technologies: ARCore and Chromium. We al
 ## <a name="KnownIssues">Known issues</a>
 * The current implementation of WebAR is built on top of the Chromium WebView flavor. This has some implementation advantages but some performance and use disadvantages. We are working on making the implementation on a full version of Chromium.
 * Pausing/resuming/switching away from the app causes screen to turn black. This is a consequence of having built the implementation on top of the WebView flavor of Chromium. A proper implementation on full Chromium or a rebase to a more recent Chromium WebView version (>57.0.2987.5) might solve this problem.
+* The [Web Speech](https://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html) API is a standard web API for text to speech and speech to text conversion that is available in Chromium. As WebARonARCore is built on top of the WebView version of Chromium, does not provide this functionality by default. There is a solution though, using a polyfill we provide, but in order to use it, you need to either a) include the [three.ar.js](https://github.com/google-ar/three.ar.js) library before making any use of the Web Speech API or b) include the [ARSpeechRecognition.js](https://github.com/google-ar/three.ar.js/blob/master/src/ARSpeechRecognition.js) file also before making any reference to the Web Speech API. Only speech recognition is suspported, not speech synthesis for now.
 
 ## <a name="FutureWork">Future work</a>
 * Add more AR-related features.
