@@ -44,6 +44,9 @@ A [list of example scenes](https://developers.google.com/ar/develop/web/getting-
 ### <a name="BuildingScenes">4. Building your own scenes</a>
 To build AR web experiences that work with WebARonARCore (or [WebARonARKit for iOS](https://github.com/google-ar/WebARonARKit)), we recommend **[three.ar.js](https://github.com/google-ar/three.ar.js)**, a helper library that works with the popular [three.js](http://threejs.org) WebGL framework. [Three.ar.js](https://github.com/google-ar/three.ar.js) provides common AR building blocks, such as a visible reticle that draws on top of real world surfaces, and [example scenes](https://github.com/google-ar/three.ar.js#examples).
 
+### <a name="debugging">5. Debugging</a>
+
+WebARonARCore uses WebViews, which is a similar debugging process to debugging Chrome for Android tabs. Check out the prereqs for your device at [Get Started with Remote Debugging Android Devices](https://developers.google.com/web/tools/chrome-devtools/remote-debugging/), and learn more about [Remote Debugging WebViews](https://developers.google.com/web/tools/chrome-devtools/remote-debugging/webviews#open_a_webview_in_devtools) by opening `chrome://inspect` in the desktop browser while your device is connected via USB.
 
 ## <a name="BuildingFromSource">Building the WebARonARCore APK from source</a>
 
