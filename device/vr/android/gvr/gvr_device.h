@@ -30,6 +30,9 @@ class GvrDevice : public VRDevice {
   mojom::VRPassThroughCameraPtr GetPassThroughCamera() override;
   std::vector<mojom::VRHitPtr> HitTest(float x, float y) override;
   mojom::VRPlaneDeltasPtr GetPlaneDeltas() override;
+  mojom::VRAnchorPtr CreateAnchor(
+    const std::vector<float>& modelMatrix) override;
+  void RemoveAnchor(uint32_t identifier) override;
 
   void RequestPresent(const base::Callback<void(bool)>& callback) override;
   void SetSecureOrigin(bool secure_origin) override;

@@ -8,8 +8,6 @@
 
 #include "base/trace_event/trace_event.h"
 
-#include "TangoHandler.h"
-
 #define THIS_VALUE_NEEDS_TO_BE_OBTAINED_FROM_THE_TANGO_API -1
 
 using base::android::AttachCurrentThread;
@@ -26,6 +24,8 @@ TangoVRDevice::TangoVRDevice(TangoVRDeviceProvider* provider)
     : tangoVRDeviceProvider(provider) {
   tangoCoordinateFramePair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
   tangoCoordinateFramePair.target = TANGO_COORDINATE_FRAME_DEVICE;
+
+  TangoHandler::getInstance()->addTangoHandlerEventListener(this);
 }
 
 TangoVRDevice::~TangoVRDevice() {
@@ -239,6 +239,18 @@ static mojom::VRPlanePtr CreateMojomPlane(Plane& plane) {
   return result;
 }
 
+static mojom::VRAnchorPtr CreateMojomAnchor(const std::shared_ptr<Anchor>& anchor)
+{
+  const float* modelMatrix = anchor->getModelMatrix(); 
+  mojom::VRAnchorPtr mojomAnchor = mojom::VRAnchor::New();
+  mojomAnchor->identifier = anchor->getIdentifier();
+  mojomAnchor->modelMatrix.resize(16);
+  for (size_t i = 0; i < 16; i++) {
+    mojomAnchor->modelMatrix[i] = modelMatrix[i];
+  }
+  return mojomAnchor;
+}
+
 static void PopulateMojomPlanes(std::vector<mojom::VRPlanePtr>& mojomPlanes, 
                          std::vector<Plane>& planes) {
   std::vector<Plane>::size_type size = planes.size();
@@ -267,6 +279,30 @@ mojom::VRPlaneDeltasPtr TangoVRDevice::GetPlaneDeltas() {
   }
   
   return mojomPlaneDeltas;
+}
+
+mojom::VRAnchorPtr TangoVRDevice::CreateAnchor(
+    const std::vector<float>& modelMatrix) 
+{
+  if (!TangoHandler::getInstance()->isConnected()) 
+  {
+    return nullptr;
+  }
+  mojom::VRAnchorPtr mojomAnchor = nullptr;
+  std::shared_ptr<Anchor> anchor = TangoHandler::getInstance()->
+    createAnchor((const float*)(&(modelMatrix[0])));
+  if (!anchor)
+  {
+    return nullptr;
+  }
+  mojomAnchor = CreateMojomAnchor(anchor);
+  return mojomAnchor;
+}
+
+void TangoVRDevice::RemoveAnchor(uint32_t identifier) {
+  if (!TangoHandler::getInstance()->isConnected()) {
+    TangoHandler::getInstance()->removeAnchor(identifier);
+  }
 }
 
 void TangoVRDevice::RequestPresent(const base::Callback<void(bool)>& callback) {
@@ -307,6 +343,22 @@ void TangoVRDevice::UpdateLayerBounds(mojom::VRLayerBoundsPtr left_bounds,
   // right_gvr_bounds.bottom = 1.0f - (right_bounds->top + right_bounds->height);
 
   // delegate_->UpdateWebVRTextureBounds(left_gvr_bounds, right_gvr_bounds);
+}
+
+void TangoVRDevice::anchorsUpdated(
+  const std::vector<std::shared_ptr<Anchor>>& anchors)
+{
+  std::vector<mojom::VRAnchorPtr> mojomAnchors;
+  mojomAnchors.resize(anchors.size());
+  for (size_t i = 0; i < anchors.size(); i++)
+  {
+    mojomAnchors[i] = CreateMojomAnchor(anchors[i]);
+  }
+
+  VLOG(0) << "JUDAX: TangoVRDevice::anchorsUpdated -> mojomAnchors.size() = " 
+          << mojomAnchors.size(); 
+
+  VRDevice::OnAnchorsUpdated(std::move(mojomAnchors));
 }
 
 }  // namespace device

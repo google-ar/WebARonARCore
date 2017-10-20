@@ -38,7 +38,7 @@ class VRPose;
 class VRHit;
 class VRPassThroughCamera;
 class VRPlane;
-
+class VRAnchor;
 class WebGLRenderingContextBase;
 
 enum VREye { VREyeNone, VREyeLeft, VREyeRight };
@@ -70,6 +70,10 @@ class VRDisplay final : public EventTargetWithInlineData,
   HeapVector<Member<VRHit>> hitTest(float x, float y);
   HeapVector<Member<VRPlane>> getPlanes();
   VRPassThroughCamera* getPassThroughCamera();
+  VRAnchor* createAnchor(WTF::Vector<float>& modelMatrix);
+  VRAnchor* createAnchor(DOMFloat32Array* modelMatrix);
+  void removeAnchor(VRAnchor* anchor);
+  HeapVector<Member<VRAnchor>> getAnchors();
 
   double depthNear() const { return m_depthNear; }
   double depthFar() const { return m_depthFar; }
@@ -134,6 +138,8 @@ class VRDisplay final : public EventTargetWithInlineData,
 
   // VRDisplayClient
   void OnChanged(device::mojom::blink::VRDisplayInfoPtr) override;
+  void OnAnchorsUpdated(
+    WTF::Vector<device::mojom::blink::VRAnchorPtr> anchors) override;
   void OnExitPresent() override;
   void OnBlur() override;
   void OnFocus() override;
@@ -186,6 +192,8 @@ class VRDisplay final : public EventTargetWithInlineData,
   HeapDeque<Member<ScriptPromiseResolver>> m_pendingPresentResolvers;
 
   HeapVector<Member<VRPlane>> m_planes;
+
+  HeapVector<Member<VRAnchor>> m_anchors;
 };
 
 using VRDisplayVector = HeapVector<Member<VRDisplay>>;

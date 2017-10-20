@@ -53,7 +53,8 @@ void VRDisplayImpl::HitTest(float x, float y, const HitTestCallback& callback)
   callback.Run(device_->HitTest(x, y));
 }
 
-void VRDisplayImpl::GetPassThroughCamera(const GetPassThroughCameraCallback& callback) {
+void VRDisplayImpl::GetPassThroughCamera(
+    const GetPassThroughCameraCallback& callback) {
   if (!device_->IsAccessAllowed(this)) {
     callback.Run(nullptr);
     return;
@@ -69,6 +70,22 @@ void VRDisplayImpl::GetPlaneDeltas(const GetPlaneDeltasCallback& callback) {
   }
 
   callback.Run(device_->GetPlaneDeltas());
+}
+
+void VRDisplayImpl::CreateAnchor(const std::vector<float>& modelMatrix,
+                                 const CreateAnchorCallback& callback) {
+  if (!device_->IsAccessAllowed(this)) {
+    callback.Run(nullptr);
+    return;
+  }
+
+  callback.Run(device_->CreateAnchor(modelMatrix));
+}
+
+void VRDisplayImpl::RemoveAnchor(uint32_t identifier) {
+  if (device_->IsAccessAllowed(this)) {
+    device_->RemoveAnchor(identifier);
+  }
 }
 
 void VRDisplayImpl::RequestPresent(bool secure_origin,

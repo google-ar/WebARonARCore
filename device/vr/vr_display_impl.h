@@ -35,6 +35,9 @@ class VRDisplayImpl : public mojom::VRDisplay {
   void HitTest(float x, float y, const HitTestCallback& callback) override;
   void GetPassThroughCamera(const GetPassThroughCameraCallback& callback) override;
   void GetPlaneDeltas(const GetPlaneDeltasCallback& callback) override;
+  void CreateAnchor(const std::vector<float>& modelMatrix,
+                    const CreateAnchorCallback& callback) override;
+  void RemoveAnchor(uint32_t identifier) override;
 
   void RequestPresent(bool secure_origin,
                       const RequestPresentCallback& callback) override;

@@ -66,6 +66,11 @@ struct VRPlane {
   uint32 count;
 };
 
+struct VRAnchor {
+  int32 identifier;
+  array<float, 16> modelMatrix;
+};
+
 struct VRPlaneDeltas {
   array<VRPlane> added;
   array<VRPlane> updated;
@@ -125,15 +130,19 @@ interface VRDisplay {
   HitTest(float x, float y) => (array<VRHit> hits);
   [Sync]
   GetPlaneDeltas() => (VRPlaneDeltas deltas);
+  [Sync]
+  CreateAnchor(array<float, 16> anchorModelMatrix) => (VRAnchor anchor);
 
   RequestPresent(bool secureOrigin) => (bool success);
   ExitPresent();
   SubmitFrame(VRPose? pose);
   UpdateLayerBounds(VRLayerBounds leftBounds, VRLayerBounds rightBounds);
+  RemoveAnchor(uint32 identifier);
 };
 
 interface VRDisplayClient {
   OnChanged(VRDisplayInfo display);
+  OnAnchorsUpdated(array<VRAnchor> anchor);
   OnExitPresent();
   OnBlur();
   OnFocus();

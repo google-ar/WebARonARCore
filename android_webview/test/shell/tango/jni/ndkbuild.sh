@@ -37,7 +37,7 @@ EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then 
 	exit $EXIT_CODE
 fi
-cp TangoHandler.h ../../../../../third_party/tango/libtango_chromium
+cp *.h ../../../../../third_party/tango/libtango_chromium
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then 
 	exit $EXIT_CODE

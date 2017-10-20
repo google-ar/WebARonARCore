@@ -107,6 +107,5 @@ public class TangoJniNative {
     public static native void onImageAvailableCallback(
         TangoImage image, TangoCameraMetadata metadata, int cameraId);
 
-    public static native void resetPose();
-
+    public static native void reset();
 }

@@ -27,6 +27,8 @@
 #include "modules/vr/VRPassThroughCamera.h"
 #include "modules/vr/VRPlane.h"
 #include "modules/vr/VRPlaneEvent.h"
+#include "modules/vr/VRAnchor.h"
+#include "modules/vr/VRAnchorEvent.h"
 #include "modules/webgl/WebGLRenderingContextBase.h"
 #include "platform/Histogram.h"
 #include "platform/UserGestureIndicator.h"
@@ -314,6 +316,63 @@ VRPassThroughCamera* VRDisplay::getPassThroughCamera()
     m_passThroughCamera->setPassThroughCamera(passThroughCamera);
   }
   return m_passThroughCamera;
+}
+
+VRAnchor* VRDisplay::createAnchor(WTF::Vector<float>& modelMatrix)
+{
+  if (!m_display)
+    return nullptr;
+
+  device::mojom::blink::VRAnchorPtr mojomAnchor;
+  m_display->CreateAnchor(modelMatrix, &mojomAnchor);
+  if (mojomAnchor.is_null()) {
+    return nullptr;
+  }
+  VRAnchor* anchor = new VRAnchor();
+  anchor->setAnchor(mojomAnchor);
+  m_anchors.push_back(anchor);
+
+  VLOG(0) << "JUDAX: VRDisplay::createAnchor -> Anchor created with identifier = " <<
+             anchor->identifier();
+
+  return anchor;
+}
+
+VRAnchor* VRDisplay::createAnchor(DOMFloat32Array* modelMatrix)
+{
+  if (!m_display)
+    return nullptr;
+
+  // Copy the DOMFloat32Array to a Vector<float>
+  WTF::Vector<float> modelMatrixVector;
+  size_t modelMatrixSize = modelMatrix->length();
+  modelMatrixVector.resize(modelMatrixSize);
+  for (size_t i = 0; i < modelMatrixSize; i++) {
+    modelMatrixVector[i] = modelMatrix->data()[i];
+  }
+
+  // Use the other overloaded method to create an anchor using the Vector.
+  return createAnchor(modelMatrixVector);
+}
+
+void VRDisplay::removeAnchor(VRAnchor* anchor)
+{
+  if (!m_display)
+    return;
+
+  bool removed = false;
+  for (size_t i = 0; !removed && i < m_anchors.size(); i++) {
+    // NOTE: Should we compare the pointers directly?
+    if (m_anchors[i]->identifier() == anchor->identifier()) {
+      m_anchors.remove(i);
+      removed = true;
+    }
+  }
+}
+
+HeapVector<Member<VRAnchor>> VRDisplay::getAnchors()
+{
+  return m_anchors;
 }
 
 VREyeParameters* VRDisplay::getEyeParameters(const String& whichEye) {
@@ -792,6 +851,40 @@ void VRDisplay::OnChanged(device::mojom::blink::VRDisplayInfoPtr display) {
   update(display);
 }
 
+void VRDisplay::OnAnchorsUpdated(
+    WTF::Vector<device::mojom::blink::VRAnchorPtr> mojomAnchors) {
+
+  // TODO: WTF::Vector does not have empty or IsEmpty?
+  // if (mojomAnchors.size() == 0) {
+  //   return;
+  // }
+
+  VLOG(0) << "JUDAX: VRDisplay::OnAnchorsUpdated -> mojomAnchors.size() = " << mojomAnchors.size();
+
+  HeapVector<Member<VRAnchor>> anchors;
+  anchors.resize(mojomAnchors.size());
+  for (size_t i = 0; i < mojomAnchors.size(); i++) {
+    int32_t identifier = mojomAnchors[i]->identifier;
+    bool found = false;
+    for (size_t j = 0; !found && j < m_anchors.size(); j++) {
+      if (m_anchors[j]->identifier() == identifier) {
+        m_anchors[j]->setAnchor(mojomAnchors[i]);
+        anchors.push_back(m_anchors[j]);
+        found = true;
+      }
+    }
+    if (!found) {
+      VLOG(1) << __FUNCTION__ << ": ERROR! An updated mojom anchor identifier " \
+        " has not been found among the cached anchors. This shouldn't happen!";
+    }
+  }
+  // TODO: HeapVector does not have empty or IsEmpty?
+  // if (anchors.size() != 0) {
+    dispatchEvent(VRAnchorEvent::create(
+      EventTypeNames::anchorsupdated, true, false, this, anchors));
+  // }
+}
+
 void VRDisplay::OnExitPresent() {
   forceExitPresent();
 }
@@ -898,6 +991,7 @@ DEFINE_TRACE(VRDisplay) {
   visitor->trace(m_pendingPresentResolvers);
   visitor->trace(m_passThroughCamera);
   visitor->trace(m_planes);
+  visitor->trace(m_anchors);
 }
 
 }  // namespace blink

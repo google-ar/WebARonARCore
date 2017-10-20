@@ -24,7 +24,6 @@
 #include <ctime>
 
 #include <jni.h>
-#include <android/log.h>
 
 #include <string>
 #include <vector>
@@ -33,9 +32,7 @@
 
 #include <mutex>
 
-#define LOG_TAG "LeTango Chromium"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#include "AnchorManager.h"
 
 namespace tango_chromium {
 
@@ -64,6 +61,14 @@ public:
 	std::vector<long> removed;
 };
 
+class TangoHandlerEventListener
+{
+public:
+  virtual void anchorsUpdated(
+  	const std::vector<std::shared_ptr<Anchor>>& anchors) = 0;
+};
+
+
 // TangoHandler provides functionality to communicate with the Tango Service.
 class TangoHandler {
 public:
@@ -77,7 +82,8 @@ public:
 
   ~TangoHandler();
 
-  void onCreate(JNIEnv* env, jobject activity, int activityOrientation, int sensorOrientation);
+  void onCreate(JNIEnv* env, jobject activity, 
+  							int activityOrientation, int sensorOrientation);
   void onTangoServiceConnected(JNIEnv* env, jobject tango);
   void onPause();
   void onDeviceRotationChanged(int activityOrientation, int sensorOrientation);
@@ -89,8 +95,13 @@ public:
   bool getProjectionMatrix(float near, float far, float* projectionMatrix);
   bool hitTest(float x, float y, std::vector<Hit>& hits);
   bool getPlaneDeltas(PlaneDeltas& planeDeltas);
+  std::shared_ptr<Anchor> createAnchor(
+  	const float* anchorModelMatrix);
+  void removeAnchor(uint32_t identifier);
 
   void resetPose();
+
+  void reset();
 
   bool updateCameraIntrinsics();
   bool getCameraImageSize(uint32_t* width, uint32_t* height);
@@ -101,6 +112,10 @@ public:
 
   int getSensorOrientation() const;
   int getActivityOrientation() const;
+
+  void addTangoHandlerEventListener(TangoHandlerEventListener* listener);
+  void removeTangoHandlerEventListener(TangoHandlerEventListener* listener);
+  void removeAllTangoHandlerEventListeners();
 
 private:
   void connect();
@@ -130,8 +145,12 @@ private:
   int sensorOrientation;
 
   std::string tangoCoreVersionString;
+
+  AnchorManager anchorManager;
+
+  std::vector<TangoHandlerEventListener*> listeners;
 };
 
-}  // namespace tango_4_chromium
+}  // namespace tango_chromium
 
 #endif  // _TANGO_HANDLER_H_

@@ -13,11 +13,16 @@
 
 #include "tango_client_api.h"
 
+#include "TangoHandler.h"
+
 namespace device {
+
+using tango_chromium::Anchor;
+using tango_chromium::TangoHandlerEventListener;
 
 class TangoVRDeviceProvider;
 
-class TangoVRDevice : public VRDevice {
+class TangoVRDevice : public VRDevice, public TangoHandlerEventListener {
  public:
   explicit TangoVRDevice(TangoVRDeviceProvider* provider);
   ~TangoVRDevice() override;
@@ -28,6 +33,9 @@ class TangoVRDevice : public VRDevice {
   mojom::VRPassThroughCameraPtr GetPassThroughCamera() override;
   std::vector<mojom::VRHitPtr> HitTest(float x, float y) override;
   mojom::VRPlaneDeltasPtr GetPlaneDeltas() override;
+  mojom::VRAnchorPtr CreateAnchor(
+    const std::vector<float>& modelMatrix) override;
+  void RemoveAnchor(uint32_t identifier) override;
 
   void RequestPresent(const base::Callback<void(bool)>& callback) override;
   void SetSecureOrigin(bool secure_origin) override;
@@ -35,6 +43,9 @@ class TangoVRDevice : public VRDevice {
   void SubmitFrame(mojom::VRPosePtr pose) override;
   void UpdateLayerBounds(mojom::VRLayerBoundsPtr left_bounds,
                          mojom::VRLayerBoundsPtr right_bounds) override;
+
+  void anchorsUpdated(
+    const std::vector<std::shared_ptr<Anchor>>& anchors) override;
 
  private:
 

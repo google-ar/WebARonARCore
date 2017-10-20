@@ -35,8 +35,6 @@
 #include "gtx/transform.hpp"
 #include "gtx/quaternion.hpp"
 
-using namespace glm;
-
 namespace {
 
 const int kVersionStringLength = 128;
@@ -108,18 +106,19 @@ void matrixProjection(float width, float height,
           matrix);
 }
 
-mat4 SS_T_GL;
-mat4 SS_T_GL_INV;
+glm::mat4 SS_T_GL;
+glm::mat4 SS_T_GL_INV;
 
-mat4 mat4FromTranslationOrientation(const double *translation, const double *orientation) {
-  vec3 translationV3 = vec3((float)translation[0],
+glm::mat4 mat4FromTranslationOrientation(const double *translation, 
+                                              const double *orientation) {
+  glm::vec3 translationV3 = glm::vec3((float)translation[0],
   (float)translation[1], (float)translation[2]);
-  quat orientationQ = quat((float)orientation[0], (float)orientation[1],
+  glm::quat orientationQ = glm::quat((float)orientation[0], (float)orientation[1],
   (float)orientation[2], (float)orientation[3]);
 
-  mat4 m = mat4();
+  glm::mat4 m = glm::mat4();
   float* out;
-  out = value_ptr(m);
+  out = glm::value_ptr(m);
   float x = (float)orientation[0];
   float y = (float)orientation[1];
   float z = (float)orientation[2];
@@ -158,16 +157,16 @@ mat4 mat4FromTranslationOrientation(const double *translation, const double *ori
   return m;
 };
 
-float rayIntersectsPlane(const vec3 &planeNormal, const vec3 &planePosition,
-    const vec3 &rayOrigin, const vec3 &rayDirection) {
+float rayIntersectsPlane(const glm::vec3 &planeNormal, const glm::vec3 &planePosition,
+    const glm::vec3 &rayOrigin, const glm::vec3 &rayDirection) {
   float denom = glm::dot(planeNormal, rayDirection);
-  vec3 rayToPlane = planePosition - rayOrigin;
+  glm::vec3 rayToPlane = planePosition - rayOrigin;
   return glm::dot(rayToPlane, planeNormal) / denom;
 }
 
-vec3 transformVec3ByMat4(const vec3 &v, const mat4 &m4) {
+glm::vec3 transformVec3ByMat4(const glm::vec3 &v, const glm::mat4 &m4) {
   const float* m;
-  m = value_ptr(m4);
+  m = glm::value_ptr(m4);
 
   float x = v[0];
   float y = v[1];
@@ -178,30 +177,30 @@ vec3 transformVec3ByMat4(const vec3 &v, const mat4 &m4) {
     w = 1.0f;
   }
 
-  return vec3(
+  return glm::vec3(
     (m[0] * x + m[4] * y + m[8] * z + m[12]) / w,
     (m[1] * x + m[5] * y + m[9] * z + m[13]) / w,
     (m[2] * x + m[6] * y + m[10] * z + m[14]) / w);
 }
 
-void setFloat16FromMat4(float *out, const mat4 &m4) {
-  const float* fM = value_ptr(m4);
+void setFloat16FromMat4(float *out, const glm::mat4 &m4) {
+  const float* fM = glm::value_ptr(m4);
   for (int i = 0; i < 16; i++) {
     out[i] = fM[i];
   }
 }
 
-bool isPointInPolygon(const vec3 &point, const vec3* polygonPoints, int count) {
+bool isPointInPolygon(const glm::vec3 &point, const glm::vec3* polygonPoints, int count) {
   if (count < 3)
   {
     return false;
   }
 
-  vec3 lastUp = vec3(0, 0, 0);
+  glm::vec3 lastUp = glm::vec3(0, 0, 0);
   for (int i = 0; i < count; ++i)
   {
-    vec3 v0 = point - polygonPoints[i];
-    vec3 v1;
+    glm::vec3 v0 = point - polygonPoints[i];
+    glm::vec3 v1;
     if (i == count - 1)
     {
       v1 = polygonPoints[0] - polygonPoints[i];
@@ -211,7 +210,7 @@ bool isPointInPolygon(const vec3 &point, const vec3* polygonPoints, int count) {
       v1 = polygonPoints[i + 1] - polygonPoints[i];
     }
 
-    vec3 up = glm::cross(v0, v1);
+    glm::vec3 up = glm::cross(v0, v1);
     if (i != 0)
     {
       float sign = glm::dot(up, lastUp);
@@ -226,9 +225,9 @@ bool isPointInPolygon(const vec3 &point, const vec3* polygonPoints, int count) {
   return true;
 }
 
-mat4 getPlaneMatrixFromPlanePose(const TangoPoseData &pose) {
+glm::mat4 getPlaneMatrixFromPlanePose(const TangoPoseData &pose) {
   // Get the plane transform matrix.
-  mat4 planeMatrix = mat4FromTranslationOrientation(
+  glm::mat4 planeMatrix = mat4FromTranslationOrientation(
       pose.translation, pose.orientation);
 
   // Plane is in the tango coordinates, so transform into GL coordinate space.
@@ -270,8 +269,8 @@ TangoHandler::TangoHandler(): connected(false)
   // SS means Start of Service: this matrix does the conversion from Start of Service transform
   // to OpenGL (tango-space has z as the up-vector, not y).
   float ss_t_gl[16] = {1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1};
-  SS_T_GL = make_mat4(ss_t_gl);
-  SS_T_GL_INV = inverse(SS_T_GL);
+  SS_T_GL = glm::make_mat4(ss_t_gl);
+  SS_T_GL_INV = glm::inverse(SS_T_GL);
 }
 
 TangoHandler::~TangoHandler()
@@ -452,6 +451,49 @@ void TangoHandler::onDeviceRotationChanged(int activityOrientation, int sensorOr
 
 void TangoHandler::onTangoEventAvailable(const TangoEvent* event)
 {
+  switch(event->type) 
+  {
+    case TANGO_EVENT_GENERAL:
+    {
+      std::string eventKey = event->event_key;
+      if (eventKey == "EXPERIMENTAL_PoseHistoryChanged")
+      {
+        double earliestTimestamp = *((double*)event->event_value);
+
+        LOGI("JUDAX: TangoHandler::onTangoEventAvailable -> EXPERIMENTAL_PoseHistoryChanged: earliestTimestamp = %lf", earliestTimestamp);
+
+        TangoPoseData newTangoPoseData;
+        if (TangoSupport_getPoseAtTime(
+          earliestTimestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+          TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+          TANGO_SUPPORT_ENGINE_OPENGL,
+          static_cast<TangoSupport_Rotation>(activityOrientation), 
+          &newTangoPoseData) == TANGO_SUCCESS)
+        {
+          glm::mat4 newCameraModelMatrix = mat4FromTranslationOrientation(
+            newTangoPoseData.translation, newTangoPoseData.orientation);
+          std::vector<std::shared_ptr<Anchor>> updatedAnchors = 
+            anchorManager.update(earliestTimestamp, 
+                                 (const float*)&newCameraModelMatrix);
+          if (!updatedAnchors.empty())
+          {
+
+            LOGI("JUDAX: TangoHandler::onTangoEventAvailable -> updatedAnchors.size() = %ld", updatedAnchors.size());
+
+            for (auto listener: listeners)
+            {
+              listener->anchorsUpdated(updatedAnchors);
+            }
+          }
+        }
+        else 
+        {
+          LOGE("ERROR: Could not retrieve the new pose data from the earliest pose history change.");
+        }
+      }
+      break;
+    }
+  }
 }
 
 bool TangoHandler::isConnected() const
@@ -531,8 +573,8 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits)
 
       // Set the projection matrix.
       float* fM;
-      mat4 projectionMatrix;
-      fM = value_ptr(projectionMatrix);
+      glm::mat4 projectionMatrix;
+      fM = glm::value_ptr(projectionMatrix);
       // TODO(lincolnfrog): near and far values should not be constants. Use the values
       // supplied by the client.
       getProjectionMatrix(0.01, 10000, fM);
@@ -540,25 +582,25 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits)
       // Set the model view matrix.
       TangoPoseData poseData;
       getPose(&poseData);
-      mat4 viewMatrix = mat4FromTranslationOrientation(
+      glm::mat4 viewMatrix = mat4FromTranslationOrientation(
           poseData.translation, poseData.orientation);
-      viewMatrix = inverse(viewMatrix);
+      viewMatrix = glm::inverse(viewMatrix);
 
       // Combine the projection and model view matrices.
-      mat4 projViewMatrix = projectionMatrix * viewMatrix;
+      glm::mat4 projViewMatrix = projectionMatrix * viewMatrix;
 
       // Invert the combined matrix because we need to go from screen -> world.
-      projViewMatrix = inverse(projViewMatrix);
+      projViewMatrix = glm::inverse(projViewMatrix);
 
       // Create a ray in screen-space for the hit test ([-1, 1] with y flip).
-      vec3 rayStart = vec3((2 * x) - 1, (2 * (1 - y)) - 1, 0);
-      vec3 rayEnd   = vec3((2 * x) - 1, (2 * (1 - y)) - 1, 1);
+      glm::vec3 rayStart = glm::vec3((2 * x) - 1, (2 * (1 - y)) - 1, 0);
+      glm::vec3 rayEnd   = glm::vec3((2 * x) - 1, (2 * (1 - y)) - 1, 1);
 
       // Transform the ray into world-space.
-      vec3 worldRayOrigin = transformVec3ByMat4(rayStart, projViewMatrix);
-      vec3 worldRayDirection = transformVec3ByMat4(rayEnd, projViewMatrix);
+      glm::vec3 worldRayOrigin = transformVec3ByMat4(rayStart, projViewMatrix);
+      glm::vec3 worldRayDirection = transformVec3ByMat4(rayEnd, projViewMatrix);
       worldRayDirection -= worldRayOrigin;
-      worldRayDirection = normalize(worldRayDirection);
+      worldRayDirection = glm::normalize(worldRayDirection);
 
       // Check each plane for intersections.
       for (int i = 0; i < numberOfPlanes; i++) {
@@ -573,14 +615,14 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits)
         }
 
         // Get the plane transform matrix.
-        mat4 planeMatrix = getPlaneMatrixFromPlanePose(planeData.pose);
+        glm::mat4 planeMatrix = getPlaneMatrixFromPlanePose(planeData.pose);
 
         // Get the plane center in world-space.
-        vec3 planeCenter = vec3(planeData.center_x, 0, planeData.center_y);
-        vec3 planePosition = transformVec3ByMat4(planeCenter, planeMatrix);
+        glm::vec3 planeCenter = glm::vec3(planeData.center_x, 0, planeData.center_y);
+        glm::vec3 planePosition = transformVec3ByMat4(planeCenter, planeMatrix);
 
         // Assume all planes are oriented horizontally.
-        vec3 planeNormal = vec3(0, 1, 0);
+        glm::vec3 planeNormal = glm::vec3(0, 1, 0);
 
         // Check if the ray intersects the plane.
         float t = rayIntersectsPlane(planeNormal, planePosition, worldRayOrigin, worldRayDirection);
@@ -591,7 +633,7 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits)
         }
 
         // Calculate the intersection point.
-        vec3 planeIntersection = worldRayOrigin + (worldRayDirection * t);
+        glm::vec3 planeIntersection = worldRayOrigin + (worldRayDirection * t);
 
         /*
         // TODO: re-enable bounding box check when we figure it out. Right now, it cuts out
@@ -600,12 +642,12 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits)
 
         // Do a bounding-box test (early-out).
         // Convert the intersection into plane-space.
-        mat4 yawMatrix = toMat4(angleAxis((float)planeData.yaw, vec3(0, 1, 0)));
-        mat4 planeMatrixInv = inverse(planeMatrix * yawMatrix);
-        vec3 planeIntersectionLocal = transformVec3ByMat4(
-            vec3(planeIntersection.x + planeData.center_x, planeIntersection.y, planeIntersection.z - planeData.center_y),
+        glm::mat4 yawMatrix = glm::toMat4(angleAxis((float)planeData.yaw, glm::vec3(0, 1, 0)));
+        glm::mat4 planeMatrixInv = glm::inverse(planeMatrix * yawMatrix);
+        glm::vec3 planeIntersectionLocal = transformVec3ByMat4(
+            glm::vec3(planeIntersection.x + planeData.center_x, planeIntersection.y, planeIntersection.z - planeData.center_y),
             planeMatrixInv);
-        //vec3 rotatedBounds = transformVec3ByMat4(vec3(planeData.width, planeData.height, 0), yawMat);
+        //glm::vec3 rotatedBounds = transformVec3ByMat4(glm::vec3(planeData.width, planeData.height, 0), yawMat);
 
         // Check if the intersection is outside of the extent of the plane.
         if (abs(planeIntersectionLocal.x) > planeData.width / 2) {
@@ -617,10 +659,10 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits)
         */
 
         // Transform all the points into world space using the plane matrix.
-        vec3 polygonPoints[planeData.boundary_point_num];
+        glm::vec3 polygonPoints[planeData.boundary_point_num];
         for (int i = 0; i < planeData.boundary_point_num; ++i) {
           polygonPoints[i] = transformVec3ByMat4(
-            vec3((float)planeData.boundary_polygon[i * 2], 0, -(float)planeData.boundary_polygon[(i * 2) + 1]),
+            glm::vec3((float)planeData.boundary_polygon[i * 2], 0, -(float)planeData.boundary_polygon[(i * 2) + 1]),
             planeMatrix);
         }
 
@@ -629,7 +671,7 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits)
           continue;
         }
 
-        mat4 hitMatrix = translate(mat4(1.0f), planeIntersection);
+        glm::mat4 hitMatrix = glm::translate(glm::mat4(1.0f), planeIntersection);
         Hit hit;
         setFloat16FromMat4(hit.modelMatrix, hitMatrix);
         hits.push_back(hit);
@@ -637,10 +679,10 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits)
 
       // Sort the hits based on distance to the camera.
       auto sortFunc = [worldRayOrigin] (Hit a, Hit b) {
-        vec3 vA = vec3(a.modelMatrix[12], a.modelMatrix[13], a.modelMatrix[14]);
+        glm::vec3 vA = glm::vec3(a.modelMatrix[12], a.modelMatrix[13], a.modelMatrix[14]);
         float dA = glm::length2(vA - worldRayOrigin);
 
-        vec3 vB = vec3(b.modelMatrix[12], b.modelMatrix[13], b.modelMatrix[14]);
+        glm::vec3 vB = glm::vec3(b.modelMatrix[12], b.modelMatrix[13], b.modelMatrix[14]);
         float dB = glm::length2(vB - worldRayOrigin);
         return dA < dB;
       };
@@ -699,10 +741,11 @@ bool TangoHandler::getPlanes(std::vector<Plane>& planes) {
         plane.timestamp = planeData.timestamp;
 
         // Set the transform values from the transformed plane matrix.
-        mat4 planeMatrix = getPlaneMatrixFromPlanePose(planeData.pose);
-        mat4 yawMatrix = toMat4(angleAxis((float)planeData.yaw, vec3(0, 1, 0)));
+        glm::mat4 planeMatrix = getPlaneMatrixFromPlanePose(planeData.pose);
+        glm::mat4 yawMatrix = glm::toMat4(glm::angleAxis((float)planeData.yaw, 
+                                                         glm::vec3(0, 1, 0)));
         planeMatrix = planeMatrix * yawMatrix;
-        const float* fM = value_ptr(planeMatrix);
+        const float* fM = glm::value_ptr(planeMatrix);
         for (int j = 0; j < 16; j++) {
           plane.modelMatrix[j] = fM[j];
         }
@@ -722,15 +765,15 @@ bool TangoHandler::getPlanes(std::vector<Plane>& planes) {
 
         // Gather all the polygon vertices and add a y-value of zero.
         for (int j = 0; j < plane.count; j++) {
-          // Create a vec3 representing each point and subtract the center value (since it is baked into the plane matrix).
-          vec3 vertex = vec3(
+          // Create a glm::vec3 representing each point and subtract the center value (since it is baked into the plane matrix).
+          glm::vec3 vertex = glm::vec3(
               (float)planeData.boundary_polygon[j * 2] - planeData.center_x,
               0,
               // The y-value gets negated because we are moving from a left-handed to a right-handed coordinate system.
               (float)-planeData.boundary_polygon[(j * 2) + 1] + planeData.center_y);
           // Transform the points by the inverse yaw matrix since we combined the yaw with the plane matrix
           // above and the yaw only applies to the bounding box.
-          vertex = transformVec3ByMat4(vertex, inverse(yawMatrix));
+          vertex = transformVec3ByMat4(vertex, glm::inverse(yawMatrix));
           plane.vertices[j * 3] = vertex.x;
           plane.vertices[(j * 3) + 1] = vertex.y;
           plane.vertices[(j * 3) + 2] = vertex.z;
@@ -788,9 +831,63 @@ bool TangoHandler::getPlaneDeltas(PlaneDeltas& planeDeltas) {
   return true;
 }
 
+std::shared_ptr<Anchor> TangoHandler::createAnchor(
+  const float* anchorModelMatrix)
+{
+  std::shared_ptr<Anchor> anchor;
+
+  // TODO: What happens when the anchor is created and the camera pose is 
+  // incorrect either because the timestamp is incorrect or the pose retrieval 
+  // fails?
+
+  double timestamp = hasLastTangoImageBufferTimestampChangedLately() ? lastTangoImageBufferTimestamp : 0.0;
+
+  LOGI("JUDAX: TangoHandler::createAnchor -> timestamp = %lf", timestamp);
+
+  TangoPoseData tangoPoseData;
+  if (TangoSupport_getPoseAtTime(
+    timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+    TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+    TANGO_SUPPORT_ENGINE_OPENGL,
+    static_cast<TangoSupport_Rotation>(activityOrientation), 
+    &tangoPoseData) == TANGO_SUCCESS)
+  {
+    glm::mat4 cameraModelMatrix = mat4FromTranslationOrientation(
+      tangoPoseData.translation, tangoPoseData.orientation);
+    anchor = anchorManager.createAnchor(timestamp, 
+                                        (const float*)&cameraModelMatrix, 
+                                        anchorModelMatrix);
+  }
+  else 
+  {
+    LOGE("ERROR: Could not retrieve the new pose data while creating anchor.");
+  }
+
+  // TODO: Remove this! For debugging purposes only!
+  std::vector<std::shared_ptr<Anchor>> anchors;
+  anchors.push_back(anchor);
+  for (auto listener: listeners)
+  {
+    listener->anchorsUpdated(anchors);
+  }
+
+  return anchor;
+}
+
+void TangoHandler::removeAnchor(uint32_t identifier)
+{
+  anchorManager.removeAnchor(identifier);
+}
+
 void TangoHandler::resetPose()
 {
   TangoService_resetMotionTracking();
+}
+
+void TangoHandler::reset()
+{
+  resetPose();
+  anchorManager.removeAllAnchors();
 }
 
 bool TangoHandler::updateCameraIntrinsics()
@@ -890,6 +987,31 @@ int TangoHandler::getSensorOrientation() const
 int TangoHandler::getActivityOrientation() const
 {
   return activityOrientation;
+}
+
+void TangoHandler::addTangoHandlerEventListener(TangoHandlerEventListener* listener)
+{
+  std::vector<TangoHandlerEventListener*>::const_iterator it = 
+    std::find(listeners.begin(), listeners.end(), listener);
+  if (it == listeners.end())
+  {
+    listeners.push_back(listener);
+  }
+}
+
+void TangoHandler::removeTangoHandlerEventListener(TangoHandlerEventListener* listener)
+{
+  std::vector<TangoHandlerEventListener*>::const_iterator it = 
+    std::find(listeners.begin(), listeners.end(), listener);
+  if (it != listeners.end())
+  {
+    listeners.erase(it);
+  }
+}
+
+void TangoHandler::removeAllTangoHandlerEventListeners()
+{
+  listeners.clear();
 }
 
 bool TangoHandler::hasLastTangoImageBufferTimestampChangedLately()

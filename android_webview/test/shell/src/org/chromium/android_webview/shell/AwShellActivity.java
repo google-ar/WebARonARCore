@@ -650,7 +650,7 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
                     mUrlTextView.setText(url);
                     saveStringToPreferences(LAST_USED_URL_PREFERENCE_NAME, url);
                 }
-                TangoJniNative.resetPose();
+                TangoJniNative.reset();
             }
 
             @Override

@@ -29,6 +29,9 @@ class DEVICE_VR_EXPORT VRDevice {
   virtual mojom::VRPassThroughCameraPtr GetPassThroughCamera() = 0;
   virtual std::vector<mojom::VRHitPtr> HitTest(float x, float y) = 0;
   virtual mojom::VRPlaneDeltasPtr GetPlaneDeltas() = 0;
+  virtual mojom::VRAnchorPtr CreateAnchor(
+    const std::vector<float>& modelMatrix) = 0;
+  virtual void RemoveAnchor(uint32_t identifier) = 0;
 
   virtual void RequestPresent(const base::Callback<void(bool)>& callback) = 0;
   virtual void SetSecureOrigin(bool secure_origin) = 0;
@@ -44,6 +47,7 @@ class DEVICE_VR_EXPORT VRDevice {
   virtual bool CheckPresentingDisplay(VRDisplayImpl* display);
 
   virtual void OnChanged();
+  virtual void OnAnchorsUpdated(std::vector<mojom::VRAnchorPtr> anchors);
   virtual void OnExitPresent();
   virtual void OnBlur();
   virtual void OnFocus();

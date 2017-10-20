@@ -62,7 +62,8 @@ if (current_cpu == "arm" || current_cpu == "arm64") {
         "../../third_party/tango/libtango_chromium",
         "../../third_party/tango/libtango_client_api",
         "../../third_party/tango/libtango_client_api2",
-        "../../third_party/tango/libtango_support"
+        "../../third_party/tango/libtango_support",
+        "../../third_party/glm/"
       ]
 
       ldflags += [
