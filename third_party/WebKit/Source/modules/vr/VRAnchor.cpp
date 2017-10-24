@@ -6,13 +6,11 @@
 
 namespace blink {
 
-VRAnchor::VRAnchor()
-{
+VRAnchor::VRAnchor() {
     m_modelMatrix = DOMFloat32Array::create(16);
 }
 
-void VRAnchor::setAnchor(const device::mojom::blink::VRAnchorPtr& anchorPtr)
-{
+void VRAnchor::setAnchor(const device::mojom::blink::VRAnchorPtr& anchorPtr) {
     if (anchorPtr.is_null()) {
         return;
     }
@@ -24,8 +22,7 @@ void VRAnchor::setAnchor(const device::mojom::blink::VRAnchorPtr& anchorPtr)
     }
 }
 
-DEFINE_TRACE(VRAnchor)
-{
+DEFINE_TRACE(VRAnchor) {
     visitor->trace(m_modelMatrix);
 }
 

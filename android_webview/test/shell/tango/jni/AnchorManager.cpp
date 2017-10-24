@@ -8,8 +8,7 @@ uint32_t Anchor::identifierCounter = 0;
 
 Anchor::Anchor(double timestamp, const float* cameraModelMatrix,
                const float* anchorModelMatrix):
-                 identifier(identifierCounter++), timestamp(timestamp)
-{
+                 identifier(identifierCounter++), timestamp(timestamp) {
   // TODO: Why store the cameraModelMatrix? A local variable would do it.
   memcpy(glm::value_ptr(this->cameraModelMatrix), cameraModelMatrix,
          sizeof(glm::mat4));
@@ -20,8 +19,7 @@ Anchor::Anchor(double timestamp, const float* cameraModelMatrix,
     inverseCameraModelMatrix * this->anchorModelMatrix;
 }
 
-bool Anchor::update(double newTimestamp, const float* newCameraModelMatrix)
-{
+bool Anchor::update(double newTimestamp, const float* newCameraModelMatrix) {
   bool needsUpdate = newTimestamp <= timestamp;
   if (needsUpdate)
   {
@@ -47,8 +45,7 @@ const float* Anchor::getModelMatrix() const
 // ===============================================
 
 std::shared_ptr<Anchor> AnchorManager::createAnchor(double timestamp,
-  const float* cameraModelMatrix, const float* anchorModelMatrix)
-{
+  const float* cameraModelMatrix, const float* anchorModelMatrix) {
   std::shared_ptr<Anchor> anchor(new Anchor(timestamp,
                                             cameraModelMatrix,
                                             anchorModelMatrix));
@@ -56,8 +53,7 @@ std::shared_ptr<Anchor> AnchorManager::createAnchor(double timestamp,
   return anchor;
 }
 
-void AnchorManager::removeAnchor(uint32_t identifier)
-{
+void AnchorManager::removeAnchor(uint32_t identifier) {
   std::unordered_map<uint32_t, std::shared_ptr<Anchor>>::iterator it = 
     anchors.find(identifier);
   if (it != anchors.end())
@@ -66,14 +62,12 @@ void AnchorManager::removeAnchor(uint32_t identifier)
   }
 }
 
-void AnchorManager::removeAllAnchors()
-{
+void AnchorManager::removeAllAnchors() {
   anchors.clear();
 }
 
 std::vector<std::shared_ptr<Anchor>> AnchorManager::update(
-  double newTimestamp, const float* newCameraModelMatrix)
-{
+  double newTimestamp, const float* newCameraModelMatrix) {
   std::vector<std::shared_ptr<Anchor>> updatedAnchors;
   updatedAnchors.reserve(anchors.size());
   std::unordered_map<uint32_t, std::shared_ptr<Anchor>>::const_iterator it =

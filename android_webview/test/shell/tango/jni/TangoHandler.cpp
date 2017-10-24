@@ -43,8 +43,7 @@ const int kTangoCoreMinimumVersion = 9377;
 
 const float ANDROID_WEBVIEW_ADDRESS_BAR_HEIGHT = 125;
 
-void onTextureAvailable(void* context, TangoCameraId tangoCameraId)
-{
+void onTextureAvailable(void* context, TangoCameraId tangoCameraId) {
   // Do nothing for now.
 }
 
@@ -60,8 +59,7 @@ void matrixFrustum(float const & left,
              float const & top,
              float const & near,
              float const & far,
-             float* matrix)
-{
+             float* matrix) {
 
   float x = 2 * near / ( right - left );
   float y = 2 * near / ( top - bottom );
@@ -90,8 +88,7 @@ void matrixProjection(float width, float height,
                       float fx, float fy,
                       float cx, float cy,
                       float near, float far,
-                      float* matrix)
-{
+                      float* matrix) {
   const float xscale = near / fx;
   const float yscale = near / fy;
 
@@ -242,8 +239,7 @@ namespace tango_chromium {
 
 TangoHandler* TangoHandler::instance = 0;
 
-TangoHandler* TangoHandler::getInstance()
-{
+TangoHandler* TangoHandler::getInstance() {
   if (instance == 0)
   {
     instance = new TangoHandler();
@@ -251,8 +247,7 @@ TangoHandler* TangoHandler::getInstance()
   return instance;
 }
 
-void TangoHandler::releaseInstance()
-{
+void TangoHandler::releaseInstance() {
   delete instance;
   instance = 0;
 }
@@ -264,8 +259,7 @@ TangoHandler::TangoHandler(): connected(false)
   , cameraImageHeight(0)
   , cameraImageTextureWidth(0)
   , cameraImageTextureHeight(0)
-  , textureIdConnected(false)
-{
+  , textureIdConnected(false) {
   // SS means Start of Service: this matrix does the conversion from Start of Service transform
   // to OpenGL (tango-space has z as the up-vector, not y).
   float ss_t_gl[16] = {1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1};
@@ -273,28 +267,24 @@ TangoHandler::TangoHandler(): connected(false)
   SS_T_GL_INV = glm::inverse(SS_T_GL);
 }
 
-TangoHandler::~TangoHandler()
-{
+TangoHandler::~TangoHandler() {
   TangoConfig_free(tangoConfig);
   tangoConfig = nullptr;
 }
 
-void TangoHandler::onCreate(JNIEnv* env, jobject activity, int activityOrientation, int sensorOrientation)
-{
+void TangoHandler::onCreate(JNIEnv* env, jobject activity, int activityOrientation, int sensorOrientation) {
   this->activityOrientation = activityOrientation;
   this->sensorOrientation = sensorOrientation;
 }
 
-void TangoHandler::onTangoServiceConnected(JNIEnv* env, jobject tango)
-{
+void TangoHandler::onTangoServiceConnected(JNIEnv* env, jobject tango) {
   TangoService_CacheTangoObject(env, tango);
 
   connect();
 }
 
 
-void TangoHandler::connect()
-{
+void TangoHandler::connect() {
   TangoErrorType result;
 
   // TANGO_CONFIG_DEFAULT is enabling Motion Tracking and disabling Depth
@@ -423,8 +413,7 @@ void TangoHandler::connect()
   this->updateCameraIntrinsics();
 }
 
-void TangoHandler::disconnect()
-{
+void TangoHandler::disconnect() {
   TangoService_disconnect();
 
   cameraImageWidth = cameraImageHeight =
@@ -435,13 +424,11 @@ void TangoHandler::disconnect()
   connected = false;
 }
 
-void TangoHandler::onPause()
-{
+void TangoHandler::onPause() {
   disconnect();
 }
 
-void TangoHandler::onDeviceRotationChanged(int activityOrientation, int sensorOrientation)
-{
+void TangoHandler::onDeviceRotationChanged(int activityOrientation, int sensorOrientation) {
   LOGE("TangoHandler::onDeviceRotationChanged; activityOrientation=%d, sensorOrientation=%d",
     activityOrientation, sensorOrientation);
   this->activityOrientation = activityOrientation;
@@ -449,8 +436,7 @@ void TangoHandler::onDeviceRotationChanged(int activityOrientation, int sensorOr
   this->updateCameraIntrinsics();
 }
 
-void TangoHandler::onTangoEventAvailable(const TangoEvent* event)
-{
+void TangoHandler::onTangoEventAvailable(const TangoEvent* event) {
   switch(event->type) 
   {
     case TANGO_EVENT_GENERAL:
@@ -501,8 +487,7 @@ bool TangoHandler::isConnected() const
   return connected;
 }
 
-bool TangoHandler::getPose(TangoPoseData* tangoPoseData)
-{
+bool TangoHandler::getPose(TangoPoseData* tangoPoseData) {
   bool result = connected;
   if (connected)
   {
@@ -531,8 +516,7 @@ bool TangoHandler::getPose(TangoPoseData* tangoPoseData)
   return result;
 }
 
-bool TangoHandler::getProjectionMatrix(float near, float far, float* projectionMatrix)
-{
+bool TangoHandler::getProjectionMatrix(float near, float far, float* projectionMatrix) {
   if (!connected) return false;
 
   bool result = this->updateCameraIntrinsics();
@@ -557,8 +541,7 @@ bool TangoHandler::getProjectionMatrix(float near, float far, float* projectionM
   return true;
 }
 
-bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits)
-{
+bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits) {
   bool result = false;
 
   if (connected)
@@ -832,8 +815,7 @@ bool TangoHandler::getPlaneDeltas(PlaneDeltas& planeDeltas) {
 }
 
 std::shared_ptr<Anchor> TangoHandler::createAnchor(
-  const float* anchorModelMatrix)
-{
+  const float* anchorModelMatrix) {
   std::shared_ptr<Anchor> anchor;
 
   // TODO: What happens when the anchor is created and the camera pose is 
@@ -874,24 +856,20 @@ std::shared_ptr<Anchor> TangoHandler::createAnchor(
   return anchor;
 }
 
-void TangoHandler::removeAnchor(uint32_t identifier)
-{
+void TangoHandler::removeAnchor(uint32_t identifier) {
   anchorManager.removeAnchor(identifier);
 }
 
-void TangoHandler::resetPose()
-{
+void TangoHandler::resetPose() {
   TangoService_resetMotionTracking();
 }
 
-void TangoHandler::reset()
-{
+void TangoHandler::reset() {
   resetPose();
   anchorManager.removeAllAnchors();
 }
 
-bool TangoHandler::updateCameraIntrinsics()
-{
+bool TangoHandler::updateCameraIntrinsics() {
   if (!connected) {
     LOGE("TangoHandler::updateCameraIntrinsics, is not connected.");
     return false;
@@ -930,8 +908,7 @@ bool TangoHandler::updateCameraIntrinsics()
   return true;
 }
 
-bool TangoHandler::getCameraImageSize(uint32_t* width, uint32_t* height)
-{
+bool TangoHandler::getCameraImageSize(uint32_t* width, uint32_t* height) {
   bool result = true;
 
   *width = cameraImageWidth;
@@ -940,8 +917,7 @@ bool TangoHandler::getCameraImageSize(uint32_t* width, uint32_t* height)
   return result;
 }
 
-bool TangoHandler::getCameraImageTextureSize(uint32_t* width, uint32_t* height)
-{
+bool TangoHandler::getCameraImageTextureSize(uint32_t* width, uint32_t* height) {
   bool result = true;
 
   *width = cameraImageTextureWidth;
@@ -950,24 +926,21 @@ bool TangoHandler::getCameraImageTextureSize(uint32_t* width, uint32_t* height)
   return result;
 }
 
-bool TangoHandler::getCameraFocalLength(double* focalLengthX, double* focalLengthY)
-{
+bool TangoHandler::getCameraFocalLength(double* focalLengthX, double* focalLengthY) {
   bool result = true;
   *focalLengthX = tangoCameraIntrinsics.fx;
   *focalLengthY = tangoCameraIntrinsics.fy;
   return result;
 }
 
-bool TangoHandler::getCameraPoint(double* x, double* y)
-{
+bool TangoHandler::getCameraPoint(double* x, double* y) {
   bool result = true;
   *x = tangoCameraIntrinsics.cx;
   *y = tangoCameraIntrinsics.cy;
   return result;
 }
 
-bool TangoHandler::updateCameraImageIntoTexture(uint32_t textureId)
-{
+bool TangoHandler::updateCameraImageIntoTexture(uint32_t textureId) {
   if (!connected) return false;
 
   TangoErrorType result = TangoService_updateTextureExternalOes(TANGO_CAMERA_COLOR, textureId, &lastTangoImageBufferTimestamp);
@@ -989,8 +962,7 @@ int TangoHandler::getActivityOrientation() const
   return activityOrientation;
 }
 
-void TangoHandler::addTangoHandlerEventListener(TangoHandlerEventListener* listener)
-{
+void TangoHandler::addTangoHandlerEventListener(TangoHandlerEventListener* listener) {
   std::vector<TangoHandlerEventListener*>::const_iterator it = 
     std::find(listeners.begin(), listeners.end(), listener);
   if (it == listeners.end())
@@ -999,8 +971,7 @@ void TangoHandler::addTangoHandlerEventListener(TangoHandlerEventListener* liste
   }
 }
 
-void TangoHandler::removeTangoHandlerEventListener(TangoHandlerEventListener* listener)
-{
+void TangoHandler::removeTangoHandlerEventListener(TangoHandlerEventListener* listener) {
   std::vector<TangoHandlerEventListener*>::const_iterator it = 
     std::find(listeners.begin(), listeners.end(), listener);
   if (it != listeners.end())
@@ -1009,13 +980,11 @@ void TangoHandler::removeTangoHandlerEventListener(TangoHandlerEventListener* li
   }
 }
 
-void TangoHandler::removeAllTangoHandlerEventListeners()
-{
+void TangoHandler::removeAllTangoHandlerEventListeners() {
   listeners.clear();
 }
 
-bool TangoHandler::hasLastTangoImageBufferTimestampChangedLately()
-{
+bool TangoHandler::hasLastTangoImageBufferTimestampChangedLately() {
   std::time_t currentTime;
   std::time(&currentTime);
   return std::difftime(currentTime, lastTangoImagebufferTimestampTime) < 1.0;

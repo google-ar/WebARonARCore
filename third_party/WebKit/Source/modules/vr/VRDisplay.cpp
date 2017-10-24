@@ -302,8 +302,7 @@ void VRDisplay::updatePlanes() {
   dispatchPlaneEvent(EventTypeNames::planesadded, planeDeltas->added);
 }
 
-VRPassThroughCamera* VRDisplay::getPassThroughCamera()
-{
+VRPassThroughCamera* VRDisplay::getPassThroughCamera() {
   if (!m_display || !m_passThroughCamera)
     return nullptr;
 
@@ -318,8 +317,7 @@ VRPassThroughCamera* VRDisplay::getPassThroughCamera()
   return m_passThroughCamera;
 }
 
-VRAnchor* VRDisplay::createAnchor(WTF::Vector<float>& modelMatrix)
-{
+VRAnchor* VRDisplay::createAnchor(WTF::Vector<float>& modelMatrix) {
   if (!m_display)
     return nullptr;
 
@@ -338,8 +336,7 @@ VRAnchor* VRDisplay::createAnchor(WTF::Vector<float>& modelMatrix)
   return anchor;
 }
 
-VRAnchor* VRDisplay::createAnchor(DOMFloat32Array* modelMatrix)
-{
+VRAnchor* VRDisplay::createAnchor(DOMFloat32Array* modelMatrix) {
   if (!m_display)
     return nullptr;
 
@@ -355,8 +352,7 @@ VRAnchor* VRDisplay::createAnchor(DOMFloat32Array* modelMatrix)
   return createAnchor(modelMatrixVector);
 }
 
-void VRDisplay::removeAnchor(VRAnchor* anchor)
-{
+void VRDisplay::removeAnchor(VRAnchor* anchor) {
   if (!m_display)
     return;
 
@@ -370,8 +366,7 @@ void VRDisplay::removeAnchor(VRAnchor* anchor)
   }
 }
 
-HeapVector<Member<VRAnchor>> VRDisplay::getAnchors()
-{
+HeapVector<Member<VRAnchor>> VRDisplay::getAnchors() {
   return m_anchors;
 }
 

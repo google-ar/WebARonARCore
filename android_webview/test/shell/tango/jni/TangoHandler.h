@@ -39,33 +39,33 @@ namespace tango_chromium {
 class Hit
 {
 public:
-	float modelMatrix[16];
+  float modelMatrix[16];
 };
 
 class Plane
 {
 public:
-	long identifier;
-	long timestamp;
-	float modelMatrix[16];
-	float extent[2];
-	std::vector<float> vertices;
+  long identifier;
+  long timestamp;
+  float modelMatrix[16];
+  float extent[2];
+  std::vector<float> vertices;
   uint count;
 };
 
 class PlaneDeltas
 {
 public:
-	std::vector<Plane> added;
-	std::vector<Plane> updated;
-	std::vector<long> removed;
+  std::vector<Plane> added;
+  std::vector<Plane> updated;
+  std::vector<long> removed;
 };
 
 class TangoHandlerEventListener
 {
 public:
   virtual void anchorsUpdated(
-  	const std::vector<std::shared_ptr<Anchor>>& anchors) = 0;
+    const std::vector<std::shared_ptr<Anchor>>& anchors) = 0;
 };
 
 
@@ -83,7 +83,7 @@ public:
   ~TangoHandler();
 
   void onCreate(JNIEnv* env, jobject activity, 
-  							int activityOrientation, int sensorOrientation);
+                int activityOrientation, int sensorOrientation);
   void onTangoServiceConnected(JNIEnv* env, jobject tango);
   void onPause();
   void onDeviceRotationChanged(int activityOrientation, int sensorOrientation);
@@ -96,7 +96,7 @@ public:
   bool hitTest(float x, float y, std::vector<Hit>& hits);
   bool getPlaneDeltas(PlaneDeltas& planeDeltas);
   std::shared_ptr<Anchor> createAnchor(
-  	const float* anchorModelMatrix);
+    const float* anchorModelMatrix);
   void removeAnchor(uint32_t identifier);
 
   void resetPose();

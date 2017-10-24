@@ -11,16 +11,16 @@ namespace blink {
 VRAnchorEvent::VRAnchorEvent() {}
 
 VRAnchorEvent::VRAnchorEvent(const AtomicString& type,
-                           bool canBubble,
-                           bool cancelable,
-                           VRDisplay* display,
-                           HeapVector<Member<VRAnchor>> anchors)
+                             bool canBubble,
+                             bool cancelable,
+                             VRDisplay* display,
+                             HeapVector<Member<VRAnchor>> anchors)
     : Event(type, canBubble, cancelable),
       m_display(display),
       m_anchors(anchors) {}
 
 VRAnchorEvent::VRAnchorEvent(const AtomicString& type,
-                           const VRAnchorEventInit& initializer)
+                             const VRAnchorEventInit& initializer)
     : Event(type, initializer) {
   if (initializer.hasDisplay())
     m_display = initializer.display();

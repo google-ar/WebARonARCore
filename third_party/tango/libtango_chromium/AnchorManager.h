@@ -11,13 +11,11 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-namespace tango_chromium
-{
+namespace tango_chromium {
 
 class AnchorManager;
 
-class Anchor
-{
+class Anchor {
 public:
   uint32_t getIdentifier() const;
   const float* getModelMatrix() const;
@@ -42,12 +40,11 @@ private:
   friend class AnchorManager;
 };
 
-class AnchorManager
-{
+class AnchorManager {
 public:
   std::shared_ptr<Anchor> createAnchor(double timestamp, 
-                                    const float* cameraModelMatrix,
-                                    const float* anchorModelMatrix);
+                                       const float* cameraModelMatrix,
+                                       const float* anchorModelMatrix);
   void removeAnchor(uint32_t identifier);
   void removeAllAnchors();
 
@@ -55,7 +52,7 @@ public:
   * Return: The list of updated anchors.
   */
   std::vector<std::shared_ptr<Anchor>> update(
-    double newTimestamp, const float* newCameraModelMatrix);
+      double newTimestamp, const float* newCameraModelMatrix);
   
 private:
   std::unordered_map<uint32_t, std::shared_ptr<Anchor>> anchors;
