@@ -5,6 +5,7 @@
 #include "device/vr/android/tango/tango_vr_device.h"
 
 #include "tango_support.h"
+#include "Anchor.h"
 
 #include "base/trace_event/trace_event.h"
 

@@ -360,6 +360,7 @@ void VRDisplay::removeAnchor(VRAnchor* anchor) {
   for (size_t i = 0; !removed && i < m_anchors.size(); i++) {
     // NOTE: Should we compare the pointers directly?
     if (m_anchors[i]->identifier() == anchor->identifier()) {
+      m_display->RemoveAnchor(anchor->identifier());
       m_anchors.remove(i);
       removed = true;
     }
@@ -857,7 +858,7 @@ void VRDisplay::OnAnchorsUpdated(
   VLOG(0) << "JUDAX: VRDisplay::OnAnchorsUpdated -> mojomAnchors.size() = " << mojomAnchors.size();
 
   HeapVector<Member<VRAnchor>> anchors;
-  anchors.resize(mojomAnchors.size());
+  anchors.reserveCapacity(mojomAnchors.size());
   for (size_t i = 0; i < mojomAnchors.size(); i++) {
     int32_t identifier = mojomAnchors[i]->identifier;
     bool found = false;
@@ -869,10 +870,14 @@ void VRDisplay::OnAnchorsUpdated(
       }
     }
     if (!found) {
-      VLOG(1) << __FUNCTION__ << ": ERROR! An updated mojom anchor identifier " \
-        " has not been found among the cached anchors. This shouldn't happen!";
+      VLOG(1) << __FUNCTION__ << ": ERROR! An updated mojom anchor " \
+          "identifier has not been found among the cached anchors. This "\
+          "shouldn't happen!";
     }
   }
+
+  VLOG(0) << "JUDAX: VRDisplay::OnAnchorsUpdated -> anchors.size() = " << anchors.size();
+
   // TODO: HeapVector does not have empty or IsEmpty?
   // if (anchors.size() != 0) {
     dispatchEvent(VRAnchorEvent::create(

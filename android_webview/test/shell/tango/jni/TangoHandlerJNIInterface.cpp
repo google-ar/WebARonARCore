@@ -25,9 +25,7 @@ extern "C" {
 JNIEXPORT void JNICALL
 Java_org_chromium_android_1webview_shell_TangoJniNative_cacheJavaObjects(
     JNIEnv* env, jobject, jobject jTangoUpdateCallback) {
-  LOGE("Java_org_chromium_android_1webview_shell_TangoJniNative_cacheJavaObjects 1");
   TangoService_CacheJavaObjects(env, jTangoUpdateCallback);
-  LOGE("Java_org_chromium_android_1webview_shell_TangoJniNative_cacheJavaObjects 2");
 }
 
 JNIEXPORT void JNICALL

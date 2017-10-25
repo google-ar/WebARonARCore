@@ -15,10 +15,14 @@
 
 #include "TangoHandler.h"
 
+namespace tango_chromium {
+  class Anchor;
+}
+
 namespace device {
 
-using tango_chromium::Anchor;
 using tango_chromium::TangoHandlerEventListener;
+using tango_chromium::Anchor;
 
 class TangoVRDeviceProvider;
 

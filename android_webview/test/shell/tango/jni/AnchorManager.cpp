@@ -1,48 +1,17 @@
 #include "AnchorManager.h"
 
+#include "Anchor.h"
+
 #include "gtc/type_ptr.hpp"
 
-using namespace tango_chromium;
+#include "tango_client_api.h"   // NOLINT
+// #include "tango_client_api2.h"   // NOLINT
+#include "tango_support.h"  // NOLINT
 
-uint32_t Anchor::identifierCounter = 0;
+#include "MathUtils.h"
+#include "LogUtils.h"
 
-Anchor::Anchor(double timestamp, const float* cameraModelMatrix,
-               const float* anchorModelMatrix):
-                 identifier(identifierCounter++), timestamp(timestamp) {
-  // TODO: Why store the cameraModelMatrix? A local variable would do it.
-  memcpy(glm::value_ptr(this->cameraModelMatrix), cameraModelMatrix,
-         sizeof(glm::mat4));
-  memcpy(glm::value_ptr(this->anchorModelMatrix), anchorModelMatrix,
-         sizeof(glm::mat4));
-  glm::mat4 inverseCameraModelMatrix = glm::inverse(this->cameraModelMatrix);
-  anchorModelMatrixRelativeToCamera =
-    inverseCameraModelMatrix * this->anchorModelMatrix;
-}
-
-bool Anchor::update(double newTimestamp, const float* newCameraModelMatrix) {
-  bool needsUpdate = newTimestamp <= timestamp;
-  if (needsUpdate)
-  {
-    timestamp = newTimestamp;
-    // TODO: Why store the cameraModelMatrix? A local variable would do it.
-    memcpy(glm::value_ptr(cameraModelMatrix), newCameraModelMatrix, 
-           sizeof(glm::mat4));
-    anchorModelMatrix = cameraModelMatrix * anchorModelMatrixRelativeToCamera;
-  }
-  return needsUpdate;
-}
-
-uint32_t Anchor::getIdentifier() const
-{
-  return identifier;
-}
-
-const float* Anchor::getModelMatrix() const
-{
-  return (const float*)(&anchorModelMatrix);
-}
-
-// ===============================================
+namespace tango_chromium {
 
 std::shared_ptr<Anchor> AnchorManager::createAnchor(double timestamp,
   const float* cameraModelMatrix, const float* anchorModelMatrix) {
@@ -55,7 +24,7 @@ std::shared_ptr<Anchor> AnchorManager::createAnchor(double timestamp,
 
 void AnchorManager::removeAnchor(uint32_t identifier) {
   std::unordered_map<uint32_t, std::shared_ptr<Anchor>>::iterator it = 
-    anchors.find(identifier);
+      anchors.find(identifier);
   if (it != anchors.end())
   {
     anchors.erase(it);
@@ -67,17 +36,34 @@ void AnchorManager::removeAllAnchors() {
 }
 
 std::vector<std::shared_ptr<Anchor>> AnchorManager::update(
-  double newTimestamp, const float* newCameraModelMatrix) {
+    double historyChangeTimestamp, int activityOrientation) {
   std::vector<std::shared_ptr<Anchor>> updatedAnchors;
   updatedAnchors.reserve(anchors.size());
   std::unordered_map<uint32_t, std::shared_ptr<Anchor>>::const_iterator it =
     anchors.begin();
   for (; it != anchors.end(); it++) {
     std::shared_ptr<Anchor> anchor = it->second;
-    if (anchor->update(newTimestamp, newCameraModelMatrix))
-    {
-      updatedAnchors.push_back(anchor);
+    if (historyChangeTimestamp < anchor->timestamp) {
+      TangoPoseData newTangoPoseData;
+      if (TangoSupport_getPoseAtTime(
+            anchor->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+            TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+            TANGO_SUPPORT_ENGINE_OPENGL,
+            static_cast<TangoSupport_Rotation>(activityOrientation), 
+            &newTangoPoseData) == TANGO_SUCCESS) {
+        glm::mat4 newCameraModelMatrix = mat4FromTranslationOrientation(
+            newTangoPoseData.translation, newTangoPoseData.orientation);
+        anchor->update(glm::value_ptr(newCameraModelMatrix));
+        updatedAnchors.push_back(anchor);
+      }
+      else {
+        LOGE("ERROR: Could not retrieve the new pose data from the pose " \
+             "history change for anchor with identifier = %d.", 
+             anchor->identifier);
+      }
     }
   }
   return updatedAnchors;
 }
+
+} // tango_chromium

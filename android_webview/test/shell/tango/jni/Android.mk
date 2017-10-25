@@ -48,7 +48,9 @@ LOCAL_C_INCLUDES := \
 	../../../../../third_party/glm
 LOCAL_SRC_FILES := TangoHandler.cpp \
                    TangoHandlerJNIInterface.cpp \
-                   AnchorManager.cpp
+                   Anchor.cpp \
+                   AnchorManager.cpp \
+                   MathUtils.cpp
 LOCAL_CFLAGS := -std=gnu++11 -Werror -fexceptions
 LOCAL_SHARED_LIBRARIES := tango_client_api2 tango_support
 LOCAL_LDLIBS := -llog -landroid -lGLESv2 -lEGL
