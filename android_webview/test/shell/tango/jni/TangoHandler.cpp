@@ -722,7 +722,7 @@ bool TangoHandler::getPlaneDeltas(PlaneDeltas& planeDeltas) {
 }
 
 std::shared_ptr<Anchor> TangoHandler::createAnchor(
-  const float* anchorModelMatrix) {
+    const float* anchorModelMatrix) {
   std::shared_ptr<Anchor> anchor;
 
   // TODO: What happens when the anchor is created and the camera pose is 

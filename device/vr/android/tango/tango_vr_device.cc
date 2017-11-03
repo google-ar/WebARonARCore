@@ -34,6 +34,7 @@ TangoVRDevice::TangoVRDevice(TangoVRDeviceProvider* provider)
 }
 
 TangoVRDevice::~TangoVRDevice() {
+  TangoHandler::getInstance()->removeTangoHandlerEventListener(this);
 }
 
 mojom::VRDisplayInfoPtr TangoVRDevice::GetVRDevice() {
