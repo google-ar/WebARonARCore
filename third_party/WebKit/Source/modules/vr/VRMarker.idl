@@ -8,7 +8,5 @@
   readonly attribute long type;
   readonly attribute long id;
   readonly attribute DOMString content;
-  readonly attribute Float32Array position;
-  readonly attribute Float32Array orientation;
   readonly attribute Float32Array modelMatrix;
 };

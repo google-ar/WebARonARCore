@@ -406,7 +406,8 @@ bool TangoHandler::getPose(TangoPoseData* tangoPoseData) {
       poseForMarkerDetectionIsCorrect = TangoSupport_getPoseAtTime(
         lastTangoImageBufferTimestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
         TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-        TANGO_SUPPORT_ENGINE_TANGO, static_cast<TangoSupport_Rotation>(activityOrientation),
+        TANGO_SUPPORT_ENGINE_TANGO, 
+        static_cast<TangoSupport_Rotation>(activityOrientation),
         &poseForMarkerDetection) == TANGO_SUCCESS;
       poseForMarkerDetectionMutex.unlock();
     }
@@ -565,10 +566,12 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits) {
 
       // Sort the hits based on distance to the camera.
       auto sortFunc = [worldRayOrigin] (Hit a, Hit b) {
-        glm::vec3 vA = glm::vec3(a.modelMatrix[12], a.modelMatrix[13], a.modelMatrix[14]);
+        glm::vec3 vA = glm::vec3(a.modelMatrix[12], a.modelMatrix[13], 
+            a.modelMatrix[14]);
         float dA = glm::length2(vA - worldRayOrigin);
 
-        glm::vec3 vB = glm::vec3(b.modelMatrix[12], b.modelMatrix[13], b.modelMatrix[14]);
+        glm::vec3 vB = glm::vec3(b.modelMatrix[12], b.modelMatrix[13], 
+            b.modelMatrix[14]);
         float dB = glm::length2(vB - worldRayOrigin);
         return dA < dB;
       };
@@ -589,7 +592,8 @@ bool TangoHandler::getPlanes(std::vector<Plane>& planes) {
   {
     TangoPlaneData* planeDatas = 0;
     size_t numberOfPlanes = 0;
-    TangoErrorType tangoResult = TangoService_Experimental_getPlanes(&planeDatas, &numberOfPlanes);
+    TangoErrorType tangoResult = TangoService_Experimental_getPlanes(&planeDatas, 
+        &numberOfPlanes);
     if (tangoResult == TANGO_SUCCESS)
     {
       if (numberOfPlanes == 0) {
@@ -741,7 +745,14 @@ std::shared_ptr<Anchor> TangoHandler::createAnchor(
                                         (const float*)&cameraModelMatrix, 
                                         anchorModelMatrix);
 
-    // TODO: Remove this! For debugging purposes only!
+    // TODO: This is needed so there is not a crash foro calling an event from
+    // the wrong thread in Chromium. I (Iker) am still trying to fix it with
+    // the help of some Chromium experts but have not been able to make it
+    // work. For some strange reason this hack of making the event call at
+    // least once before the next, different thread calls are made seems to
+    // fix it. Another possible solution would be to store a container of
+    // updated anchors (checking that only storing the latest) and retrieve
+    // them in the IDL layer by polling instead of event calling.
     std::vector<std::shared_ptr<Anchor>> anchors;
     anchors.push_back(anchor);
     for (auto listener: listeners)
@@ -820,7 +831,8 @@ bool TangoHandler::getCameraImageSize(uint32_t* width, uint32_t* height) {
   return result;
 }
 
-bool TangoHandler::getCameraImageTextureSize(uint32_t* width, uint32_t* height) {
+bool TangoHandler::getCameraImageTextureSize(uint32_t* width, 
+    uint32_t* height) {
   bool result = true;
 
   *width = cameraImageTextureWidth;
@@ -829,7 +841,8 @@ bool TangoHandler::getCameraImageTextureSize(uint32_t* width, uint32_t* height) 
   return result;
 }
 
-bool TangoHandler::getCameraFocalLength(double* focalLengthX, double* focalLengthY) {
+bool TangoHandler::getCameraFocalLength(double* focalLengthX, 
+    double* focalLengthY) {
   bool result = true;
   *focalLengthX = tangoCameraIntrinsics.fx;
   *focalLengthY = tangoCameraIntrinsics.fy;
@@ -846,7 +859,8 @@ bool TangoHandler::getCameraPoint(double* x, double* y) {
 bool TangoHandler::updateCameraImageIntoTexture(uint32_t textureId) {
   if (!connected) return false;
 
-  TangoErrorType result = TangoService_updateTextureExternalOes(TANGO_CAMERA_COLOR, textureId, &lastTangoImageBufferTimestamp);
+  TangoErrorType result = TangoService_updateTextureExternalOes(
+      TANGO_CAMERA_COLOR, textureId, &lastTangoImageBufferTimestamp);
 
   std::time(&lastTangoImagebufferTimestampTime);
 
@@ -869,7 +883,8 @@ bool TangoHandler::updateCameraImageIntoTexture(uint32_t textureId) {
   if (textureReadRequestCounter > 0) {
 
     int cameraImageBufferSize;
-    cameraImageBuffer.data = TextureReader_readPixels(&cameraImageBufferSize, IMAGE_FORMAT_YUV420);
+    cameraImageBuffer.data = TextureReader_readPixels(&cameraImageBufferSize, 
+        IMAGE_FORMAT_YUV420);
     textureReaderMutex.unlock();
     // A texture read has been performed. Notify one of the requesters.
     textureReaderCV.notify_one();
@@ -892,7 +907,8 @@ int TangoHandler::getActivityOrientation() const{
   return activityOrientation;
 }
 
-void TangoHandler::addTangoHandlerEventListener(TangoHandlerEventListener* listener) {
+void TangoHandler::addTangoHandlerEventListener(
+    TangoHandlerEventListener* listener) {
   std::vector<TangoHandlerEventListener*>::const_iterator it = 
     std::find(listeners.begin(), listeners.end(), listener);
   if (it == listeners.end())
@@ -901,7 +917,8 @@ void TangoHandler::addTangoHandlerEventListener(TangoHandlerEventListener* liste
   }
 }
 
-void TangoHandler::removeTangoHandlerEventListener(TangoHandlerEventListener* listener) {
+void TangoHandler::removeTangoHandlerEventListener(
+    TangoHandlerEventListener* listener) {
   std::vector<TangoHandlerEventListener*>::const_iterator it = 
     std::find(listeners.begin(), listeners.end(), listener);
   if (it != listeners.end())
@@ -977,18 +994,22 @@ void TangoHandler::waitForAllMarkerDetectionThreads() {
   detectedMarkersMutex.unlock();
 }
 
-bool TangoHandler::getMarkers(TangoMarkers_MarkerType markerType, float markerSize, std::vector<Marker>& markers) {
+bool TangoHandler::getMarkers(TangoMarkers_MarkerType markerType, 
+    float markerSize, std::vector<Marker>& markers) {
   if (connected)
   {
 
-    time_type currentTime = std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
-    long elapsedTimeBetweenGetMarkerCalls = (currentTime - lastGetMarkersCallTime).count();
+    time_type currentTime = 
+        std::chrono::time_point_cast<std::chrono::milliseconds>(clock::now());
+    long elapsedTimeBetweenGetMarkerCalls = 
+        (currentTime - lastGetMarkersCallTime).count();
 
     // Lock the use of he detectedMarkers vector
     detectedMarkersMutex.lock();
 
     // Make a copy of the currently detected markers to the structure that requested them.
-    markers.insert(markers.begin(), detectedMarkers.begin(), detectedMarkers.end());
+    markers.insert(markers.begin(), detectedMarkers.begin(), 
+        detectedMarkers.end());
     // Now that the detected markers have been copied, clear the list for future requests.
     detectedMarkers.clear();
 
@@ -1091,8 +1112,7 @@ bool TangoHandler::getMarkers(TangoMarkers_MarkerType markerType, float markerSi
             markerList.markers[i].translation,
             markerList.markers[i].orientation);
           detectedMarkers.push_back(Marker(markerType, id,
-            content, markerList.markers[i].translation,
-            markerList.markers[i].orientation, (float*)&modelMatrix));
+            content, (float*)&modelMatrix));
         }
         detectedMarkersMutex.unlock();
         TangoMarkers_freeMarkerList(&markerList);

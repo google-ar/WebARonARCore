@@ -80,10 +80,9 @@ public:
 class Marker
 {
 public:
-  Marker(TangoMarkers_MarkerType type, int id, const std::string& content, const double* position, const double* orientation, const float* modelMatrix): type(type), id(id), content(content)
+  Marker(TangoMarkers_MarkerType type, int id, const std::string& content, 
+      const float* modelMatrix): type(type), id(id), content(content)
   {
-    memcpy(this->position, position, sizeof(this->position));
-    memcpy(this->orientation, orientation, sizeof(this->orientation));
     memcpy(this->modelMatrix, modelMatrix, sizeof(this->modelMatrix));
   }
 
@@ -102,16 +101,6 @@ public:
     return content;
   }
 
-  const double* getPosition() const
-  {
-    return position;
-  }
-
-  const double* getOrientation() const
-  {
-    return orientation;
-  }
-
   const float* getModelMatrix() const
   {
     return modelMatrix;
@@ -121,8 +110,6 @@ private:
   TangoMarkers_MarkerType type;
   int id;
   std::string content;
-  double position[3];
-  double orientation[4];
   float modelMatrix[16];
 };
 

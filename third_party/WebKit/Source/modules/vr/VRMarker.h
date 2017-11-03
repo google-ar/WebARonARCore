@@ -20,8 +20,6 @@ public:
     unsigned type() const;
     unsigned id() const;
     String content() const;
-    DOMFloat32Array* position() const;
-    DOMFloat32Array* orientation() const;
     DOMFloat32Array* modelMatrix() const;
 
     void setMarker(const device::mojom::blink::VRMarkerPtr&);
@@ -31,8 +29,6 @@ private:
     unsigned m_type;
     unsigned m_id;
     String m_content;
-    Member<DOMFloat32Array> m_position;
-    Member<DOMFloat32Array> m_orientation;
     Member<DOMFloat32Array> m_modelMatrix;
 };
 

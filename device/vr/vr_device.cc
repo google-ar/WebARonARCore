@@ -53,7 +53,7 @@ void VRDevice::OnChanged() {
 
 void VRDevice::OnAnchorsUpdated(std::vector<mojom::VRAnchorPtr> anchors) {
   
-  VLOG(0) << "JUDAX: VRDevice::OnAnchorsUpdated -> displays_.size() = " << displays_.size() << ", anchors.size() = " << anchors.size();
+  // VLOG(0) << "JUDAX: VRDevice::OnAnchorsUpdated -> displays_.size() = " << displays_.size() << ", anchors.size() = " << anchors.size();
 
   for (const auto& display : displays_) {
     display->client()->OnAnchorsUpdated(std::move(anchors));

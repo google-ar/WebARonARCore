@@ -10,7 +10,8 @@
 
 namespace blink {
 
-class VRPassThroughCamera final : public GarbageCollected<VRPassThroughCamera>, public ScriptWrappable {
+class VRPassThroughCamera final : public GarbageCollected<VRPassThroughCamera>, 
+public ScriptWrappable {
     DEFINE_WRAPPERTYPEINFO();
 public:
     VRPassThroughCamera();
@@ -25,14 +26,15 @@ public:
     double pointY() const;
     long orientation();
 
-    void setPassThroughCamera(const device::mojom::blink::VRPassThroughCameraPtr&);
+    void setPassThroughCamera(
+            const device::mojom::blink::VRPassThroughCameraPtr&);
 
     DECLARE_VIRTUAL_TRACE()
 private:
-	unsigned long m_width;
-	unsigned long m_height;
-	unsigned long m_textureWidth;
-	unsigned long m_textureHeight;
+    unsigned long m_width;
+    unsigned long m_height;
+    unsigned long m_textureWidth;
+    unsigned long m_textureHeight;
     double m_focalLengthX;
     double m_focalLengthY;
     double m_pointX;

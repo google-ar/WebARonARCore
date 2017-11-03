@@ -80,11 +80,15 @@ mojom::VRDisplayInfoPtr TangoVRDevice::GetVRDevice() {
     right_eye->offset[1] = 0.0;
     right_eye->offset[2] = 0.0;
 
-    left_eye->renderWidth = THIS_VALUE_NEEDS_TO_BE_OBTAINED_FROM_THE_TANGO_API/*screen_size[0]*/ / 2.0;
-    left_eye->renderHeight = THIS_VALUE_NEEDS_TO_BE_OBTAINED_FROM_THE_TANGO_API/*screen_size[1]*/;
+    left_eye->renderWidth = 
+        THIS_VALUE_NEEDS_TO_BE_OBTAINED_FROM_THE_TANGO_API / 2.0;
+    left_eye->renderHeight = 
+        THIS_VALUE_NEEDS_TO_BE_OBTAINED_FROM_THE_TANGO_API;
 
-    right_eye->renderWidth = THIS_VALUE_NEEDS_TO_BE_OBTAINED_FROM_THE_TANGO_API/*screen_size[0]*/ / 2.0;
-    right_eye->renderHeight = THIS_VALUE_NEEDS_TO_BE_OBTAINED_FROM_THE_TANGO_API/*screen_size[1]*/;
+    right_eye->renderWidth = 
+        THIS_VALUE_NEEDS_TO_BE_OBTAINED_FROM_THE_TANGO_API / 2.0;
+    right_eye->renderHeight = 
+        THIS_VALUE_NEEDS_TO_BE_OBTAINED_FROM_THE_TANGO_API;
 
     return device;
   }
@@ -162,14 +166,14 @@ mojom::VRPosePtr TangoVRDevice::GetPose() {
     pose->orientation.emplace(4);
     pose->position.emplace(3);
 
-    pose->orientation.value()[0] = tangoPoseData.orientation[0]/*decomposed_transform.quaternion[0]*/;
-    pose->orientation.value()[1] = tangoPoseData.orientation[1]/*decomposed_transform.quaternion[1]*/;
-    pose->orientation.value()[2] = tangoPoseData.orientation[2]/*decomposed_transform.quaternion[2]*/;
-    pose->orientation.value()[3] = tangoPoseData.orientation[3]/*decomposed_transform.quaternion[3]*/;
+    pose->orientation.value()[0] = tangoPoseData.orientation[0];
+    pose->orientation.value()[1] = tangoPoseData.orientation[1];
+    pose->orientation.value()[2] = tangoPoseData.orientation[2];
+    pose->orientation.value()[3] = tangoPoseData.orientation[3];
 
-    pose->position.value()[0] = tangoPoseData.translation[0]/*decomposed_transform.translate[0]*/;
-    pose->position.value()[1] = tangoPoseData.translation[1]/*decomposed_transform.translate[1]*/;
-    pose->position.value()[2] = tangoPoseData.translation[2]/*decomposed_transform.translate[2]*/;
+    pose->position.value()[0] = tangoPoseData.translation[0];
+    pose->position.value()[1] = tangoPoseData.translation[1];
+    pose->position.value()[2] = tangoPoseData.translation[2];
   }
 
   return pose;
@@ -179,24 +183,26 @@ void TangoVRDevice::ResetPose() {
   TangoHandler::getInstance()->resetPose();
 }
 
-mojom::VRPassThroughCameraPtr TangoVRDevice::GetPassThroughCamera()
-{
+mojom::VRPassThroughCameraPtr TangoVRDevice::GetPassThroughCamera() {
   TangoHandler* tangoHandler = TangoHandler::getInstance();
   mojom::VRPassThroughCameraPtr seeThroughCameraPtr = nullptr;
   if (tangoHandler->isConnected())
   {
     seeThroughCameraPtr = mojom::VRPassThroughCamera::New();
-    tangoHandler->getCameraImageSize(&(seeThroughCameraPtr->width), &(seeThroughCameraPtr->height));
-    tangoHandler->getCameraImageTextureSize(&(seeThroughCameraPtr->textureWidth), &(seeThroughCameraPtr->textureHeight));
-    tangoHandler->getCameraFocalLength(&(seeThroughCameraPtr->focalLengthX), &(seeThroughCameraPtr->focalLengthY));
-    tangoHandler->getCameraPoint(&(seeThroughCameraPtr->pointX), &(seeThroughCameraPtr->pointY));
+    tangoHandler->getCameraImageSize(&(seeThroughCameraPtr->width), 
+        &(seeThroughCameraPtr->height));
+    tangoHandler->getCameraImageTextureSize(&(seeThroughCameraPtr->textureWidth), 
+        &(seeThroughCameraPtr->textureHeight));
+    tangoHandler->getCameraFocalLength(&(seeThroughCameraPtr->focalLengthX), 
+        &(seeThroughCameraPtr->focalLengthY));
+    tangoHandler->getCameraPoint(&(seeThroughCameraPtr->pointX), 
+        &(seeThroughCameraPtr->pointY));
     seeThroughCameraPtr->orientation = tangoHandler->getSensorOrientation();
   }
   return seeThroughCameraPtr;
 }
 
-std::vector<mojom::VRHitPtr> TangoVRDevice::HitTest(float x, float y)
-{
+std::vector<mojom::VRHitPtr> TangoVRDevice::HitTest(float x, float y) {
   std::vector<mojom::VRHitPtr> mojomHits;
   if (TangoHandler::getInstance()->isConnected())
   {
@@ -244,8 +250,8 @@ static mojom::VRPlanePtr CreateMojomPlane(Plane& plane) {
   return result;
 }
 
-static mojom::VRAnchorPtr CreateMojomAnchor(const std::shared_ptr<Anchor>& anchor)
-{
+static mojom::VRAnchorPtr CreateMojomAnchor(
+    const std::shared_ptr<Anchor>& anchor) {
   const float* modelMatrix = anchor->getModelMatrix(); 
   mojom::VRAnchorPtr mojomAnchor = mojom::VRAnchor::New();
   mojomAnchor->identifier = anchor->getIdentifier();
@@ -257,7 +263,7 @@ static mojom::VRAnchorPtr CreateMojomAnchor(const std::shared_ptr<Anchor>& ancho
 }
 
 static void PopulateMojomPlanes(std::vector<mojom::VRPlanePtr>& mojomPlanes, 
-                         std::vector<Plane>& planes) {
+    std::vector<Plane>& planes) {
   std::vector<Plane>::size_type size = planes.size();
   mojomPlanes.resize(size);
   for (std::vector<Plane>::size_type i = 0; i < size; i++)
@@ -287,8 +293,7 @@ mojom::VRPlaneDeltasPtr TangoVRDevice::GetPlaneDeltas() {
 }
 
 mojom::VRAnchorPtr TangoVRDevice::CreateAnchor(
-    const std::vector<float>& modelMatrix) 
-{
+    const std::vector<float>& modelMatrix)  {
   if (!TangoHandler::getInstance()->isConnected()) 
   {
     return nullptr;
@@ -310,7 +315,8 @@ void TangoVRDevice::RemoveAnchor(uint32_t identifier) {
   }
 }
 
-std::vector<mojom::VRMarkerPtr> TangoVRDevice::GetMarkers(unsigned markerType, float markerSize) {
+std::vector<mojom::VRMarkerPtr> TangoVRDevice::GetMarkers(unsigned markerType, 
+    float markerSize) {
   std::vector<mojom::VRMarkerPtr> mojomMarkers;
   if (TangoHandler::getInstance()->isConnected())
   {
@@ -324,7 +330,9 @@ std::vector<mojom::VRMarkerPtr> TangoVRDevice::GetMarkers(unsigned markerType, f
         mt = TANGO_MARKERS_MARKER_QRCODE;
         break;
       default:
-        VLOG(0) << "ERROR: Incorrect marker type value. Currently supported values are VRDipslay.MARKER_TYPE_AR and VRDisplay.MARKER_TYPE_QRCODE.";
+        VLOG(0) << "ERROR: Incorrect marker type value. Currently supported" \
+            "values are VRDipslay.MARKER_TYPE_AR and " \
+            "VRDisplay.MARKER_TYPE_QRCODE.";
         return mojomMarkers;
     }
     std::vector<Marker> markers;
@@ -338,21 +346,6 @@ std::vector<mojom::VRMarkerPtr> TangoVRDevice::GetMarkers(unsigned markerType, f
         mojomMarkers[i]->type = markers[i].getType();
         mojomMarkers[i]->id = markers[i].getId();
         mojomMarkers[i]->content = markers[i].getContent();
-
-        mojomMarkers[i]->position.resize(3);
-        // Need to convert from double to float :(
-        const double* markerPosition = markers[i].getPosition(); 
-        mojomMarkers[i]->position[0] = markerPosition[0];
-        mojomMarkers[i]->position[1] = markerPosition[1];
-        mojomMarkers[i]->position[2] = markerPosition[2];
-
-        mojomMarkers[i]->orientation.resize(4);
-        const double* markerOrientation = markers[i].getOrientation(); 
-        mojomMarkers[i]->orientation[0] = markerOrientation[0];
-        mojomMarkers[i]->orientation[1] = markerOrientation[1];
-        mojomMarkers[i]->orientation[2] = markerOrientation[2];
-        mojomMarkers[i]->orientation[3] = markerOrientation[3];
-
         mojomMarkers[i]->modelMatrix.resize(16);
         const float* modelMatrix = markers[i].getModelMatrix();
         for (int j = 0; j < 16; j++)
@@ -406,8 +399,8 @@ void TangoVRDevice::UpdateLayerBounds(mojom::VRLayerBoundsPtr left_bounds,
 }
 
 void TangoVRDevice::anchorsUpdated(
-  const std::vector<std::shared_ptr<Anchor>>& anchors)
-{
+  const std::vector<std::shared_ptr<Anchor>>& anchors) {
+
   anchorsUpdatedInternal(anchors);
   
   // TODO: Tried these 2 options and none worked. One compiles/links and the
@@ -424,8 +417,7 @@ void TangoVRDevice::anchorsUpdated(
 }
 
 void TangoVRDevice::anchorsUpdatedInternal(
-  const std::vector<std::shared_ptr<Anchor>>& anchors)
-{
+  const std::vector<std::shared_ptr<Anchor>>& anchors) {
   std::vector<mojom::VRAnchorPtr> mojomAnchors;
   mojomAnchors.resize(anchors.size());
   for (size_t i = 0; i < anchors.size(); i++)
@@ -433,8 +425,8 @@ void TangoVRDevice::anchorsUpdatedInternal(
     mojomAnchors[i] = CreateMojomAnchor(anchors[i]);
   }
 
-  VLOG(0) << "JUDAX: TangoVRDevice::anchorsUpdated -> mojomAnchors.size() = " 
-          << mojomAnchors.size(); 
+  // VLOG(0) << "JUDAX: TangoVRDevice::anchorsUpdated -> mojomAnchors.size() = " 
+          // << mojomAnchors.size(); 
 
   VRDevice::OnAnchorsUpdated(std::move(mojomAnchors));
 }

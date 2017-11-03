@@ -331,8 +331,8 @@ VRAnchor* VRDisplay::createAnchor(WTF::Vector<float>& modelMatrix) {
   anchor->setAnchor(mojomAnchor);
   m_anchors.push_back(anchor);
 
-  VLOG(0) << "JUDAX: VRDisplay::createAnchor -> Anchor created with identifier = " <<
-             anchor->identifier();
+  // VLOG(0) << "JUDAX: VRDisplay::createAnchor -> Anchor created with identifier = " <<
+  //            anchor->identifier();
 
   return anchor;
 }
@@ -372,13 +372,14 @@ HeapVector<Member<VRAnchor>> VRDisplay::getAnchors() {
   return m_anchors;
 }
 
-HeapVector<Member<VRMarker>> VRDisplay::getMarkers(unsigned markerType, float markerSize)
-{
+HeapVector<Member<VRMarker>> VRDisplay::getMarkers(unsigned markerType, 
+    float markerSize) {
   HeapVector<Member<VRMarker>> markers;
   if (!m_display)
     return markers;
   Vector<device::mojom::blink::VRMarkerPtr> mojomMarkers;
-  if (m_display->GetMarkers(markerType, markerSize, &mojomMarkers) && !mojomMarkers.isEmpty())
+  if (m_display->GetMarkers(markerType, markerSize, &mojomMarkers) && 
+      !mojomMarkers.isEmpty())
   {
     markers.resize(mojomMarkers.size());
     for (size_t i = 0; i < mojomMarkers.size(); i++)
@@ -875,7 +876,7 @@ void VRDisplay::OnAnchorsUpdated(
   //   return;
   // }
 
-  VLOG(0) << "JUDAX: VRDisplay::OnAnchorsUpdated -> mojomAnchors.size() = " << mojomAnchors.size();
+  // VLOG(0) << "JUDAX: VRDisplay::OnAnchorsUpdated -> mojomAnchors.size() = " << mojomAnchors.size();
 
   HeapVector<Member<VRAnchor>> anchors;
   anchors.reserveCapacity(mojomAnchors.size());
@@ -896,7 +897,7 @@ void VRDisplay::OnAnchorsUpdated(
     }
   }
 
-  VLOG(0) << "JUDAX: VRDisplay::OnAnchorsUpdated -> anchors.size() = " << anchors.size();
+  // VLOG(0) << "JUDAX: VRDisplay::OnAnchorsUpdated -> anchors.size() = " << anchors.size();
 
   // TODO: HeapVector does not have empty or IsEmpty?
   // if (anchors.size() != 0) {
