@@ -97,7 +97,7 @@ The line below not only compiles Chromium but also installs the final APK on to 
 ```
 You can review the content of the script to see what it does (it is a fairly simple script) but if you would like to compile the final APK on your own you could do it by executing the following command:
 ```
-~/chromium/src$ ninja -C out/build
+~/chromium/src$ ninja -C out/build android_webview_apk
 ```
 
 The final APK will be built in the folders `~/chromium/src/apk` and `~/chromium/src/out/build/apks`.
