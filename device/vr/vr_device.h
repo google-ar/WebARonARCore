@@ -29,8 +29,8 @@ class DEVICE_VR_EXPORT VRDevice {
   virtual mojom::VRPassThroughCameraPtr GetPassThroughCamera() = 0;
   virtual std::vector<mojom::VRHitPtr> HitTest(float x, float y) = 0;
   virtual mojom::VRPlaneDeltasPtr GetPlaneDeltas() = 0;
-  virtual mojom::VRAnchorPtr CreateAnchor(
-    const std::vector<float>& modelMatrix) = 0;
+  virtual mojom::VRAnchorPtr AddAnchor(
+      const std::vector<float>& modelMatrix) = 0;
   virtual void RemoveAnchor(uint32_t identifier) = 0;
   virtual std::vector<mojom::VRMarkerPtr> GetMarkers(unsigned markerType, float markerSize) = 0;
 

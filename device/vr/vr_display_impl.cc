@@ -72,14 +72,14 @@ void VRDisplayImpl::GetPlaneDeltas(const GetPlaneDeltasCallback& callback) {
   callback.Run(device_->GetPlaneDeltas());
 }
 
-void VRDisplayImpl::CreateAnchor(const std::vector<float>& modelMatrix,
-                                 const CreateAnchorCallback& callback) {
+void VRDisplayImpl::AddAnchor(const std::vector<float>& modelMatrix,
+                                 const AddAnchorCallback& callback) {
   if (!device_->IsAccessAllowed(this)) {
     callback.Run(nullptr);
     return;
   }
 
-  callback.Run(device_->CreateAnchor(modelMatrix));
+  callback.Run(device_->AddAnchor(modelMatrix));
 }
 
 void VRDisplayImpl::RemoveAnchor(uint32_t identifier) {

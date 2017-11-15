@@ -71,8 +71,8 @@ class VRDisplay final : public EventTargetWithInlineData,
   HeapVector<Member<VRHit>> hitTest(float x, float y);
   HeapVector<Member<VRPlane>> getPlanes();
   VRPassThroughCamera* getPassThroughCamera();
-  VRAnchor* createAnchor(WTF::Vector<float>& modelMatrix);
-  VRAnchor* createAnchor(DOMFloat32Array* modelMatrix);
+  VRAnchor* addAnchor(WTF::Vector<float>& modelMatrix);
+  VRAnchor* addAnchor(DOMFloat32Array* modelMatrix);
   void removeAnchor(VRAnchor* anchor);
   HeapVector<Member<VRAnchor>> getAnchors();
   HeapVector<Member<VRMarker>> getMarkers(unsigned markerType, 

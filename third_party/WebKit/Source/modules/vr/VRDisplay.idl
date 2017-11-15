@@ -37,8 +37,8 @@ enum VREye {
     sequence<VRHit> hitTest(float x, float y);
     VRPassThroughCamera getPassThroughCamera();
     sequence<VRPlane> getPlanes();
-    VRAnchor createAnchor(sequence<float> modelMatrix);
-    VRAnchor createAnchor(Float32Array modelMatrix);
+    VRAnchor addAnchor(sequence<float> modelMatrix);
+    VRAnchor addAnchor(Float32Array modelMatrix);
     void removeAnchor(VRAnchor anchor);
     sequence<VRAnchor> getAnchors();
     sequence<VRMarker> getMarkers(long type, float size);

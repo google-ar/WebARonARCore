@@ -17,6 +17,8 @@ active
 addsourcebuffer
 addstream
 addtrack
+anchorsadded
+anchorsremoved
 anchorsupdated
 animationend
 animationiteration

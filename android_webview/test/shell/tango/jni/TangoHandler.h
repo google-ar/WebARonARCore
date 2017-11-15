@@ -139,7 +139,7 @@ public:
   bool getProjectionMatrix(float near, float far, float* projectionMatrix);
   bool hitTest(float x, float y, std::vector<Hit>& hits);
   bool getPlaneDeltas(PlaneDeltas& planeDeltas);
-  std::shared_ptr<Anchor> createAnchor(
+  std::shared_ptr<Anchor> addAnchor(
     const float* anchorModelMatrix);
   void removeAnchor(uint32_t identifier);
 

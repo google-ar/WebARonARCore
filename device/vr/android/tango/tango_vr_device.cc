@@ -293,7 +293,7 @@ mojom::VRPlaneDeltasPtr TangoVRDevice::GetPlaneDeltas() {
   return mojomPlaneDeltas;
 }
 
-mojom::VRAnchorPtr TangoVRDevice::CreateAnchor(
+mojom::VRAnchorPtr TangoVRDevice::AddAnchor(
     const std::vector<float>& modelMatrix)  {
   if (!TangoHandler::getInstance()->isConnected()) 
   {
@@ -301,7 +301,7 @@ mojom::VRAnchorPtr TangoVRDevice::CreateAnchor(
   }
   mojom::VRAnchorPtr mojomAnchor = nullptr;
   std::shared_ptr<Anchor> anchor = TangoHandler::getInstance()->
-    createAnchor((const float*)(&(modelMatrix[0])));
+    addAnchor((const float*)(&(modelMatrix[0])));
   if (!anchor)
   {
     return nullptr;

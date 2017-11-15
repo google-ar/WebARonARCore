@@ -13,7 +13,7 @@
 
 namespace tango_chromium {
 
-std::shared_ptr<Anchor> AnchorManager::createAnchor(double timestamp,
+std::shared_ptr<Anchor> AnchorManager::addAnchor(double timestamp,
   const float* cameraModelMatrix, const float* anchorModelMatrix) {
   std::shared_ptr<Anchor> anchor(new Anchor(timestamp,
                                             cameraModelMatrix,

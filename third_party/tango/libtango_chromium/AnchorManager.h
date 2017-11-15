@@ -10,7 +10,7 @@ class Anchor;
 
 class AnchorManager {
 public:
-  std::shared_ptr<Anchor> createAnchor(double timestamp, 
+  std::shared_ptr<Anchor> addAnchor(double timestamp, 
                                        const float* cameraModelMatrix,
                                        const float* anchorModelMatrix);
   void removeAnchor(uint32_t identifier);

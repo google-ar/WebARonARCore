@@ -5,5 +5,6 @@
 [
   RuntimeEnabled=WebVR
 ] interface VRAnchor {
+    readonly attribute long identifier;
     readonly attribute Float32Array? modelMatrix;
 };

@@ -721,7 +721,7 @@ bool TangoHandler::getPlaneDeltas(PlaneDeltas& planeDeltas) {
   return true;
 }
 
-std::shared_ptr<Anchor> TangoHandler::createAnchor(
+std::shared_ptr<Anchor> TangoHandler::addAnchor(
     const float* anchorModelMatrix) {
   std::shared_ptr<Anchor> anchor;
 
@@ -741,7 +741,7 @@ std::shared_ptr<Anchor> TangoHandler::createAnchor(
   {
     glm::mat4 cameraModelMatrix = mat4FromTranslationOrientation(
       tangoPoseData.translation, tangoPoseData.orientation);
-    anchor = anchorManager.createAnchor(timestamp, 
+    anchor = anchorManager.addAnchor(timestamp, 
                                         (const float*)&cameraModelMatrix, 
                                         anchorModelMatrix);
 

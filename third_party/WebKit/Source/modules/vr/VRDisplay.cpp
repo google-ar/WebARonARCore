@@ -318,12 +318,12 @@ VRPassThroughCamera* VRDisplay::getPassThroughCamera() {
   return m_passThroughCamera;
 }
 
-VRAnchor* VRDisplay::createAnchor(WTF::Vector<float>& modelMatrix) {
+VRAnchor* VRDisplay::addAnchor(WTF::Vector<float>& modelMatrix) {
   if (!m_display)
     return nullptr;
 
   device::mojom::blink::VRAnchorPtr mojomAnchor;
-  m_display->CreateAnchor(modelMatrix, &mojomAnchor);
+  m_display->AddAnchor(modelMatrix, &mojomAnchor);
   if (mojomAnchor.is_null()) {
     return nullptr;
   }
@@ -331,13 +331,20 @@ VRAnchor* VRDisplay::createAnchor(WTF::Vector<float>& modelMatrix) {
   anchor->setAnchor(mojomAnchor);
   m_anchors.push_back(anchor);
 
-  // VLOG(0) << "JUDAX: VRDisplay::createAnchor -> Anchor created with identifier = " <<
+  // VLOG(0) << "JUDAX: VRDisplay::addAnchor -> Anchor added with identifier = " <<
   //            anchor->identifier();
+
+  // Dispatch the anchorsadded event.
+  HeapVector<Member<VRAnchor>> anchors;
+  anchors.reserveCapacity(1);
+  anchors.push_back(anchor);
+  dispatchEvent(VRAnchorEvent::create(
+      EventTypeNames::anchorsadded, true, false, this, anchors));
 
   return anchor;
 }
 
-VRAnchor* VRDisplay::createAnchor(DOMFloat32Array* modelMatrix) {
+VRAnchor* VRDisplay::addAnchor(DOMFloat32Array* modelMatrix) {
   if (!m_display)
     return nullptr;
 
@@ -350,7 +357,7 @@ VRAnchor* VRDisplay::createAnchor(DOMFloat32Array* modelMatrix) {
   }
 
   // Use the other overloaded method to create an anchor using the Vector.
-  return createAnchor(modelMatrixVector);
+  return addAnchor(modelMatrixVector);
 }
 
 void VRDisplay::removeAnchor(VRAnchor* anchor) {
@@ -366,6 +373,13 @@ void VRDisplay::removeAnchor(VRAnchor* anchor) {
       removed = true;
     }
   }
+
+  // Dispatch the anchorsadded event.
+  HeapVector<Member<VRAnchor>> anchors;
+  anchors.reserveCapacity(1);
+  anchors.push_back(anchor);
+  dispatchEvent(VRAnchorEvent::create(
+      EventTypeNames::anchorsremoved, true, false, this, anchors));
 }
 
 HeapVector<Member<VRAnchor>> VRDisplay::getAnchors() {

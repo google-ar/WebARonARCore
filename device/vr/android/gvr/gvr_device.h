@@ -30,7 +30,7 @@ class GvrDevice : public VRDevice {
   mojom::VRPassThroughCameraPtr GetPassThroughCamera() override;
   std::vector<mojom::VRHitPtr> HitTest(float x, float y) override;
   mojom::VRPlaneDeltasPtr GetPlaneDeltas() override;
-  mojom::VRAnchorPtr CreateAnchor(
+  mojom::VRAnchorPtr AddAnchor(
     const std::vector<float>& modelMatrix) override;
   void RemoveAnchor(uint32_t identifier) override;
   std::vector<mojom::VRMarkerPtr> GetMarkers(unsigned markerType, 

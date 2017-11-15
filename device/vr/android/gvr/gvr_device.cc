@@ -238,7 +238,7 @@ mojom::VRPlaneDeltasPtr GvrDevice::GetPlaneDeltas() {
   return planes;
 }
 
-mojom::VRAnchorPtr GvrDevice::CreateAnchor(
+mojom::VRAnchorPtr GvrDevice::AddAnchor(
     const std::vector<float>& modelMatrix) {
   return nullptr;
 }
