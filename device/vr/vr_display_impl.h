@@ -36,21 +36,20 @@ class VRDisplayImpl : public mojom::VRDisplay {
   void GetPassThroughCamera(const GetPassThroughCameraCallback& callback) override;
   void GetPlaneDeltas(const GetPlaneDeltasCallback& callback) override;
   void AddAnchor(const std::vector<float>& modelMatrix,
-                    const AddAnchorCallback& callback) override;
+      const AddAnchorCallback& callback) override;
   void RemoveAnchor(uint32_t identifier) override;
   void GetMarkers(unsigned markerType, float markerSize, 
-                  const GetMarkersCallback& callback) override;
+      const GetMarkersCallback& callback) override;
   void RequestPresent(bool secure_origin,
-                      const RequestPresentCallback& callback) override;
+      const RequestPresentCallback& callback) override;
   void ExitPresent() override;
   void SubmitFrame(mojom::VRPosePtr pose) override;
 
   void UpdateLayerBounds(mojom::VRLayerBoundsPtr left_bounds,
-                         mojom::VRLayerBoundsPtr right_bounds) override;
+      mojom::VRLayerBoundsPtr right_bounds) override;
 
   void RequestPresentResult(const RequestPresentCallback& callback,
-                            bool secure_origin,
-                            bool success);
+      bool secure_origin, bool success);
 
   mojo::Binding<mojom::VRDisplay> binding_;
   mojom::VRDisplayClientPtr client_;

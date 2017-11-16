@@ -93,7 +93,7 @@ mojom::VRDisplayInfoPtr GvrDevice::GetVRDevice() {
     // (and visible wobble) on entering VR.
     if (delegate_) {
       delegate_->SetWebVRRenderSurfaceSize(kInvalidRenderTargetSize.width,
-                                           kInvalidRenderTargetSize.height);
+          kInvalidRenderTargetSize.height);
     }
 
     return device;
@@ -145,7 +145,7 @@ mojom::VRDisplayInfoPtr GvrDevice::GetVRDevice() {
 
   if (delegate_) {
     delegate_->SetWebVRRenderSurfaceSize(2 * left_eye->renderWidth,
-                                         left_eye->renderHeight);
+        left_eye->renderHeight);
   }
 
   return device;
@@ -272,7 +272,7 @@ void GvrDevice::SubmitFrame(mojom::VRPosePtr pose) {
 }
 
 void GvrDevice::UpdateLayerBounds(mojom::VRLayerBoundsPtr left_bounds,
-                                  mojom::VRLayerBoundsPtr right_bounds) {
+    mojom::VRLayerBoundsPtr right_bounds) {
   if (!delegate_)
     return;
 

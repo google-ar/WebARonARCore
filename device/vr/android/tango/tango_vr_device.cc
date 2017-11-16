@@ -380,7 +380,7 @@ void TangoVRDevice::SubmitFrame(mojom::VRPosePtr pose) {
 }
 
 void TangoVRDevice::UpdateLayerBounds(mojom::VRLayerBoundsPtr left_bounds,
-                                  mojom::VRLayerBoundsPtr right_bounds) {
+    mojom::VRLayerBoundsPtr right_bounds) {
   // if (!delegate_)
   //   return;
 

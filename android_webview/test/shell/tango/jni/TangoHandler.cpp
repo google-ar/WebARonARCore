@@ -57,7 +57,7 @@ void onTextureAvailable(void* context, TangoCameraId tangoCameraId) {
 }
 
 void onFrameAvailable(void* context, TangoCameraId tangoCameraId, 
-                      const TangoImageBuffer* imageBuffer) {
+    const TangoImageBuffer* imageBuffer) {
   tango_chromium::TangoHandler::getInstance()->onFrameAvailable(imageBuffer);
 }
 
@@ -124,7 +124,7 @@ TangoHandler::~TangoHandler() {
 }
 
 void TangoHandler::onCreate(JNIEnv* env, jobject activity, 
-                            int activityOrientation, int sensorOrientation) {
+    int activityOrientation, int sensorOrientation) {
   this->activityOrientation = activityOrientation;
   this->sensorOrientation = sensorOrientation;
 }
@@ -192,14 +192,14 @@ void TangoHandler::connect() {
 
   // Enabling experimental plane finding.
   result = TangoConfig_setBool(tangoConfig,
-                            "config_experimental_enable_plane_detection", true);
+      "config_experimental_enable_plane_detection", true);
   if (result != TANGO_SUCCESS) {
     LOGE("TangoHandler::connect, failed to enable experimental plane finding.");
     std::exit(EXIT_SUCCESS);
   }
 
   result = TangoConfig_setInt32(tangoConfig, "config_depth_mode",
-                                TANGO_POINTCLOUD_XYZC);
+      TANGO_POINTCLOUD_XYZC);
   if (result != TANGO_SUCCESS) {
     LOGE(
         "TangoHandler::connect, failed to configure point cloud to "
@@ -210,7 +210,7 @@ void TangoHandler::connect() {
   // Get TangoCore version string from service.
   char tangoCoreVersionCharArray[kVersionStringLength];
   result = TangoConfig_getString(tangoConfig, "tango_service_library_version",
-                              tangoCoreVersionCharArray, kVersionStringLength);
+      tangoCoreVersionCharArray, kVersionStringLength);
   if (result != TANGO_SUCCESS) {
     LOGE(
         "TangoHandler::connect, get tango core version failed with error"
@@ -277,7 +277,7 @@ void TangoHandler::connect() {
 
   // Initialize TangoSupport context.
   TangoSupport_initialize(TangoService_getPoseAtTime,
-                          TangoService_getCameraIntrinsics);
+      TangoService_getCameraIntrinsics);
 
   connected = true;
 
@@ -312,7 +312,7 @@ void TangoHandler::onPause() {
 }
 
 void TangoHandler::onDeviceRotationChanged(int activityOrientation, 
-                                           int sensorOrientation) {
+    int sensorOrientation) {
   LOGE("TangoHandler::onDeviceRotationChanged; activityOrientation=%d, sensorOrientation=%d",
     activityOrientation, sensorOrientation);
   this->activityOrientation = activityOrientation;
@@ -404,11 +404,11 @@ bool TangoHandler::getPose(TangoPoseData* tangoPoseData) {
     {
       poseForMarkerDetectionMutex.lock();
       poseForMarkerDetectionIsCorrect = TangoSupport_getPoseAtTime(
-        lastTangoImageBufferTimestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-        TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-        TANGO_SUPPORT_ENGINE_TANGO, 
-        static_cast<TangoSupport_Rotation>(activityOrientation),
-        &poseForMarkerDetection) == TANGO_SUCCESS;
+          lastTangoImageBufferTimestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+          TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+          TANGO_SUPPORT_ENGINE_TANGO, 
+          static_cast<TangoSupport_Rotation>(activityOrientation),
+          &poseForMarkerDetection) == TANGO_SUCCESS;
       poseForMarkerDetectionMutex.unlock();
     }
   }
@@ -416,7 +416,7 @@ bool TangoHandler::getPose(TangoPoseData* tangoPoseData) {
 }
 
 bool TangoHandler::getProjectionMatrix(float near, float far, 
-                                       float* projectionMatrix) {
+    float* projectionMatrix) {
   if (!connected) return false;
 
   bool result = this->updateCameraIntrinsics();
@@ -510,7 +510,7 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits) {
 
         // Check if the ray intersects the plane.
         float t = rayIntersectsPlane(planeNormal, planePosition,
-                                     worldRayOrigin, worldRayDirection);
+            worldRayOrigin, worldRayDirection);
 
         // If t < 0, there is no intersection.
         if (t < 0) {
@@ -547,13 +547,13 @@ bool TangoHandler::hitTest(float x, float y, std::vector<Hit>& hits) {
         glm::vec3 polygonPoints[planeData.boundary_point_num];
         for (int i = 0; i < planeData.boundary_point_num; ++i) {
           polygonPoints[i] = transformVec3ByMat4(
-            glm::vec3((float)planeData.boundary_polygon[i * 2], 0, 
-                      -(float)planeData.boundary_polygon[(i * 2) + 1]),
+              glm::vec3((float)planeData.boundary_polygon[i * 2], 0, 
+              -(float)planeData.boundary_polygon[(i * 2) + 1]),
             planeMatrix);
         }
 
         if(!isPointInPolygon(planeIntersection, polygonPoints, 
-                             planeData.boundary_point_num)) {
+            planeData.boundary_point_num)) {
           // The intersection point lies outside the plane polygon, so skip it.
           continue;
         }
@@ -633,7 +633,7 @@ bool TangoHandler::getPlanes(std::vector<Plane>& planes) {
         // Set the transform values from the transformed plane matrix.
         glm::mat4 planeMatrix = getPlaneMatrixFromPlanePose(planeData.pose);
         glm::mat4 yawMatrix = glm::toMat4(glm::angleAxis((float)planeData.yaw, 
-                                                         glm::vec3(0, 1, 0)));
+            glm::vec3(0, 1, 0)));
         planeMatrix = planeMatrix * yawMatrix;
         const float* fM = glm::value_ptr(planeMatrix);
         for (int j = 0; j < 16; j++) {
@@ -733,17 +733,16 @@ std::shared_ptr<Anchor> TangoHandler::addAnchor(
 
   TangoPoseData tangoPoseData;
   if (TangoSupport_getPoseAtTime(
-    timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-    TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-    TANGO_SUPPORT_ENGINE_OPENGL,
-    static_cast<TangoSupport_Rotation>(activityOrientation), 
-    &tangoPoseData) == TANGO_SUCCESS)
-  {
+      timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+      TANGO_SUPPORT_ENGINE_OPENGL,
+      static_cast<TangoSupport_Rotation>(activityOrientation), 
+      &tangoPoseData) == TANGO_SUCCESS) {
     glm::mat4 cameraModelMatrix = mat4FromTranslationOrientation(
-      tangoPoseData.translation, tangoPoseData.orientation);
+        tangoPoseData.translation, tangoPoseData.orientation);
     anchor = anchorManager.addAnchor(timestamp, 
-                                        (const float*)&cameraModelMatrix, 
-                                        anchorModelMatrix);
+        (const float*)&cameraModelMatrix, 
+        anchorModelMatrix);
 
     // TODO: This is needed so there is not a crash foro calling an event from
     // the wrong thread in Chromium. I (Iker) am still trying to fix it with
@@ -790,7 +789,8 @@ bool TangoHandler::updateCameraIntrinsics() {
   }
 
   int result = TangoSupport_getCameraIntrinsicsBasedOnDisplayRotation(
-      TANGO_CAMERA_COLOR, static_cast<TangoSupport_Rotation>(activityOrientation),
+      TANGO_CAMERA_COLOR, 
+      static_cast<TangoSupport_Rotation>(activityOrientation),
       &tangoCameraIntrinsics);
 
   if (result != TANGO_SUCCESS) {
@@ -873,9 +873,9 @@ bool TangoHandler::updateCameraImageIntoTexture(uint32_t textureId) {
       cameraImageBuffer.data = 0;
     }
     TextureReader_initialize(textureId, 
-                             GL_TEXTURE_EXTERNAL_OES, 
-                             tangoCameraIntrinsics.width, 
-                             tangoCameraIntrinsics.height, true);
+        GL_TEXTURE_EXTERNAL_OES, 
+        tangoCameraIntrinsics.width, 
+        tangoCameraIntrinsics.height, true);
     textureReaderInitialized = true;
     textureReaderTextureId = textureId;
   }
@@ -947,10 +947,10 @@ void TangoHandler::removeThisMarkerDetectionThread() {
   std::size_t thisThreadIdHash = threadHasher(thisThreadId);
   markerDetectionThreadsMutex.lock();
   auto iter = std::find_if(markerDetectionThreads.begin(), 
-                           markerDetectionThreads.end(), 
-                           [=](std::thread &t) { 
-                             return (t.get_id() == thisThreadId); 
-                           });
+      markerDetectionThreads.end(), 
+      [=](std::thread &t) { 
+       return (t.get_id() == thisThreadId); 
+      });
   if (iter != markerDetectionThreads.end())
   {
     iter->detach();
@@ -1047,9 +1047,9 @@ bool TangoHandler::getMarkers(TangoMarkers_MarkerType markerType,
       // Get the translation and orientation from the last pose.
       poseForMarkerDetectionMutex.lock();
       memcpy(translation, poseForMarkerDetection.translation, 
-        sizeof(double) * 3);
+          sizeof(double) * 3);
       memcpy(orientation, poseForMarkerDetection.orientation, 
-        sizeof(double) * 4);
+          sizeof(double) * 4);
       poseForMarkerDetectionMutex.unlock();
 
       TangoErrorType errorType;
@@ -1079,12 +1079,13 @@ bool TangoHandler::getMarkers(TangoMarkers_MarkerType markerType,
         }
       }
       // Detect markers as we are certain we have the needed data.
-      errorType = TangoMarkers_detectMarkers(&cameraImageBuffer, 
-                                             TANGO_CAMERA_COLOR, 
-                                             translation, 
-                                             orientation, 
-                                             &param, 
-                                             &markerList);
+      errorType = TangoMarkers_detectMarkers(
+          &cameraImageBuffer, 
+          TANGO_CAMERA_COLOR, 
+          translation, 
+          orientation, 
+          &param, 
+          &markerList);
       // Reset the image data so no more texture read are executed until needed.
       cameraImageBuffer.data = 0;
       // Finally unlock.
@@ -1105,12 +1106,12 @@ bool TangoHandler::getMarkers(TangoMarkers_MarkerType markerType,
               break;
             case TANGO_MARKERS_MARKER_QRCODE:
               content = std::string(markerList.markers[i].content, 
-                                    markerList.markers[i].content_size);
+                  markerList.markers[i].content_size);
               break;
           }
           mat4 modelMatrix = mat4FromTranslationOrientation(
-            markerList.markers[i].translation,
-            markerList.markers[i].orientation);
+              markerList.markers[i].translation,
+              markerList.markers[i].orientation);
           detectedMarkers.push_back(Marker(markerType, id,
             content, (float*)&modelMatrix));
         }

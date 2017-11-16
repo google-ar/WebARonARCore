@@ -41,14 +41,14 @@ class TangoVRDevice : public VRDevice, public TangoHandlerEventListener {
     const std::vector<float>& modelMatrix) override;
   void RemoveAnchor(uint32_t identifier) override;
   std::vector<mojom::VRMarkerPtr> GetMarkers(unsigned markerType, 
-                                             float markerSize) override;
+      float markerSize) override;
 
   void RequestPresent(const base::Callback<void(bool)>& callback) override;
   void SetSecureOrigin(bool secure_origin) override;
   void ExitPresent() override;
   void SubmitFrame(mojom::VRPosePtr pose) override;
   void UpdateLayerBounds(mojom::VRLayerBoundsPtr left_bounds,
-                         mojom::VRLayerBoundsPtr right_bounds) override;
+      mojom::VRLayerBoundsPtr right_bounds) override;
 
   // Override from TangoHandlerEventListener
   void anchorsUpdated(

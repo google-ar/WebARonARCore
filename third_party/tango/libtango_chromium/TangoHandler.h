@@ -126,7 +126,8 @@ public:
 
   ~TangoHandler();
 
-  void onCreate(JNIEnv* env, jobject activity, int activityOrientation, int sensorOrientation);
+  void onCreate(JNIEnv* env, jobject activity, int activityOrientation,
+      int sensorOrientation);
   void onTangoServiceConnected(JNIEnv* env, jobject tango);
   void onPause();
   void onDeviceRotationChanged(int activityOrientation, int sensorOrientation);
@@ -139,8 +140,7 @@ public:
   bool getProjectionMatrix(float near, float far, float* projectionMatrix);
   bool hitTest(float x, float y, std::vector<Hit>& hits);
   bool getPlaneDeltas(PlaneDeltas& planeDeltas);
-  std::shared_ptr<Anchor> addAnchor(
-    const float* anchorModelMatrix);
+  std::shared_ptr<Anchor> addAnchor(const float* anchorModelMatrix);
   void removeAnchor(uint32_t identifier);
 
   void resetPose();
@@ -162,7 +162,7 @@ public:
   void removeAllTangoHandlerEventListeners();
 
   bool getMarkers(TangoMarkers_MarkerType markerType, float markerSize, 
-                  std::vector<Marker>& markers);
+      std::vector<Marker>& markers);
 
 private:
   void connect();

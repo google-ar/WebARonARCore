@@ -18,8 +18,8 @@ VRDisplayImpl::VRDisplayImpl(device::VRDevice* device, VRServiceImpl* service)
   mojom::VRDisplayInfoPtr display_info = device->GetVRDevice();
   if (service->client()) {
     service->client()->OnDisplayConnected(binding_.CreateInterfacePtrAndBind(),
-                                          mojo::MakeRequest(&client_),
-                                          std::move(display_info));
+        mojo::MakeRequest(&client_),
+        std::move(display_info));
   }
 }
 
@@ -73,7 +73,7 @@ void VRDisplayImpl::GetPlaneDeltas(const GetPlaneDeltasCallback& callback) {
 }
 
 void VRDisplayImpl::AddAnchor(const std::vector<float>& modelMatrix,
-                                 const AddAnchorCallback& callback) {
+    const AddAnchorCallback& callback) {
   if (!device_->IsAccessAllowed(this)) {
     callback.Run(nullptr);
     return;
@@ -89,7 +89,7 @@ void VRDisplayImpl::RemoveAnchor(uint32_t identifier) {
 }
 
 void VRDisplayImpl::GetMarkers(unsigned markerType, float markerSize, 
-                               const GetMarkersCallback& callback) {
+    const GetMarkersCallback& callback) {
   if (!device_->IsAccessAllowed(this)) {
     callback.Run(std::vector<mojom::VRMarkerPtr>());
     return;
@@ -99,20 +99,20 @@ void VRDisplayImpl::GetMarkers(unsigned markerType, float markerSize,
 }
 
 void VRDisplayImpl::RequestPresent(bool secure_origin,
-                                   const RequestPresentCallback& callback) {
+    const RequestPresentCallback& callback) {
   if (!device_->IsAccessAllowed(this)) {
     callback.Run(false);
     return;
   }
 
   device_->RequestPresent(base::Bind(&VRDisplayImpl::RequestPresentResult,
-                                     weak_ptr_factory_.GetWeakPtr(), callback,
-                                     secure_origin));
+      weak_ptr_factory_.GetWeakPtr(), callback,
+      secure_origin));
 }
 
 void VRDisplayImpl::RequestPresentResult(const RequestPresentCallback& callback,
-                                         bool secure_origin,
-                                         bool success) {
+    bool secure_origin,
+    bool success) {
   if (success) {
     device_->SetPresentingDisplay(this);
     device_->SetSecureOrigin(secure_origin);
@@ -132,7 +132,7 @@ void VRDisplayImpl::SubmitFrame(mojom::VRPosePtr pose) {
 }
 
 void VRDisplayImpl::UpdateLayerBounds(mojom::VRLayerBoundsPtr left_bounds,
-                                      mojom::VRLayerBoundsPtr right_bounds) {
+    mojom::VRLayerBoundsPtr right_bounds) {
   if (!device_->IsAccessAllowed(this))
     return;
 
