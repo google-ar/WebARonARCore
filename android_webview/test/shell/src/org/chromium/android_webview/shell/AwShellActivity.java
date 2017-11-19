@@ -20,6 +20,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.IBinder;
 import android.os.Bundle;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -436,7 +437,7 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
                     @Override
                     public void onClick(DialogInterface dialog, int which)
                     {
-                        AwShellActivity.this.finish();
+                        finish();
                     }
                 }, 1, "Ok", null, null).show();
             return;
@@ -500,23 +501,37 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
     {
         if (mInitialized && mResumed && mAllPermissionsGranted)
         {
-            mTango = new Tango(this, new Runnable() {
-                @Override
-                public void run() {
-                    TangoJniNative.onTangoServiceConnected(mTango);
+            try {
+                mTango = new Tango(this, new Runnable() {
+                    @Override
+                    public void run() {
+                        TangoJniNative.onTangoServiceConnected(mTango);
 
-                    // Finally load the URL in the main UI thread.
-                    AwShellActivity.this.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            // Now we can finally load the URL
-                            mAwTestContainerView.getAwContents().loadUrl(mStartupUrl);
-                            AwContents.setShouldDownloadFavicons();
-                            mUrlTextView.setText(mStartupUrl);
-                        }
-                    });
-                }
-            });
+                        // Finally load the URL in the main UI thread.
+                        AwShellActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                // Now we can finally load the URL
+                                mAwTestContainerView.getAwContents().loadUrl(mStartupUrl);
+                                AwContents.setShouldDownloadFavicons();
+                                mUrlTextView.setText(mStartupUrl);
+                            }
+                        });
+                    }
+                });                
+            } catch(UnsatisfiedLinkError e) {
+                createAlertDialog(this, "ARCore not installed", "It seems like ARCore is not installed. You will be redirected to the URL to be able to install it.", 
+                    new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which)
+                    {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, 
+                            Uri.parse("https://github.com/google-ar/arcore-android-sdk/releases/download/sdk-preview/arcore-preview.apk"));
+                        startActivity(browserIntent);
+                    }
+                }, 1, "Ok", null, null).show();                
+            }
         }
     }
 

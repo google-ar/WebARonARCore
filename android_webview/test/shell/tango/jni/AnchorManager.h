@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <mutex>
 
 namespace tango_chromium {
 
@@ -24,6 +25,7 @@ public:
   
 private:
   std::unordered_map<uint32_t, std::shared_ptr<Anchor>> anchors;
+  std::mutex anchorsMutex;
 };
 
 }

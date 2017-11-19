@@ -752,8 +752,9 @@ std::shared_ptr<Anchor> TangoHandler::addAnchor(
     // fix it. Another possible solution would be to store a container of
     // updated anchors (checking that only storing the latest) and retrieve
     // them in the IDL layer by polling instead of event calling.
+    // For now, just sending an empty container so no event is actually fired
+    // to the final app.
     std::vector<std::shared_ptr<Anchor>> anchors;
-    anchors.push_back(anchor);
     for (auto listener: listeners)
     {
       listener->anchorsUpdated(anchors);
@@ -778,6 +779,7 @@ void TangoHandler::resetPose() {
 
 void TangoHandler::reset() {
   resetPose();
+  planeMap.clear();
   anchorManager.removeAllAnchors();
   waitForAllMarkerDetectionThreads();
 }

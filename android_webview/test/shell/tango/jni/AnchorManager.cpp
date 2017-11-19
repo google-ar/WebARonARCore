@@ -18,31 +18,44 @@ std::shared_ptr<Anchor> AnchorManager::addAnchor(double timestamp,
   std::shared_ptr<Anchor> anchor(new Anchor(timestamp,
                                             cameraModelMatrix,
                                             anchorModelMatrix));
+  anchorsMutex.lock();
   anchors[anchor->getIdentifier()] = anchor;
+  anchorsMutex.unlock();
   return anchor;
 }
 
 void AnchorManager::removeAnchor(uint32_t identifier) {
+  anchorsMutex.lock();
   std::unordered_map<uint32_t, std::shared_ptr<Anchor>>::iterator it = 
       anchors.find(identifier);
   if (it != anchors.end())
   {
     anchors.erase(it);
   }
+  anchorsMutex.unlock();
 }
 
 void AnchorManager::removeAllAnchors() {
+  anchorsMutex.lock();
   anchors.clear();
+  anchorsMutex.unlock();
 }
 
 std::vector<std::shared_ptr<Anchor>> AnchorManager::update(
     double historyChangeTimestamp, int activityOrientation) {
+  // Create a container to hold up to all the anchors that are currently
+  // available. Remember, the capacity is not the size of the container.
   std::vector<std::shared_ptr<Anchor>> updatedAnchors;
   updatedAnchors.reserve(anchors.size());
+  // Iterate over all the anchors and try to update them. Each anchor's
+  // timestamp will indicate if the anchor needs to be updated.
+  anchorsMutex.lock();
   std::unordered_map<uint32_t, std::shared_ptr<Anchor>>::const_iterator it =
     anchors.begin();
   for (; it != anchors.end(); it++) {
     std::shared_ptr<Anchor> anchor = it->second;
+    // If the anchor was created anytime after the camera pose update time,
+    // the anchor needs to be updated.
     if (historyChangeTimestamp < anchor->timestamp) {
       TangoPoseData newTangoPoseData;
       if (TangoSupport_getPoseAtTime(
@@ -63,6 +76,7 @@ std::vector<std::shared_ptr<Anchor>> AnchorManager::update(
       }
     }
   }
+  anchorsMutex.unlock();
   return updatedAnchors;
 }
 

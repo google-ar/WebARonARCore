@@ -82,10 +82,12 @@ void VRDisplayImpl::AddAnchor(const std::vector<float>& modelMatrix,
   callback.Run(device_->AddAnchor(modelMatrix));
 }
 
-void VRDisplayImpl::RemoveAnchor(uint32_t identifier) {
+void VRDisplayImpl::RemoveAnchor(uint32_t identifier,
+    const RemoveAnchorCallback& callback) {
   if (device_->IsAccessAllowed(this)) {
     device_->RemoveAnchor(identifier);
   }
+  callback.Run();
 }
 
 void VRDisplayImpl::GetMarkers(unsigned markerType, float markerSize, 

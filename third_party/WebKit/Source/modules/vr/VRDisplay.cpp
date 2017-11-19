@@ -332,7 +332,7 @@ VRAnchor* VRDisplay::addAnchor(WTF::Vector<float>& modelMatrix) {
   m_anchors.push_back(anchor);
 
   // VLOG(0) << "JUDAX: VRDisplay::addAnchor -> Anchor added with identifier = " <<
-  //            anchor->identifier();
+  //     anchor->identifier() << ". m_anchors.size() = " << m_anchors.size();
 
   // Dispatch the anchorsadded event.
   HeapVector<Member<VRAnchor>> anchors;
@@ -374,7 +374,7 @@ void VRDisplay::removeAnchor(VRAnchor* anchor) {
     }
   }
 
-  // Dispatch the anchorsadded event.
+  // Dispatch the anchorsremoved event.
   HeapVector<Member<VRAnchor>> anchors;
   anchors.reserveCapacity(1);
   anchors.push_back(anchor);
@@ -892,6 +892,11 @@ void VRDisplay::OnAnchorsUpdated(
 
   // VLOG(0) << "JUDAX: VRDisplay::OnAnchorsUpdated -> mojomAnchors.size() = " << mojomAnchors.size();
 
+  // If the number of anchors is 0, do not do anything.
+  if (mojomAnchors.size() == 0) {
+    return;
+  }
+
   HeapVector<Member<VRAnchor>> anchors;
   anchors.reserveCapacity(mojomAnchors.size());
   for (size_t i = 0; i < mojomAnchors.size(); i++) {
@@ -905,19 +910,17 @@ void VRDisplay::OnAnchorsUpdated(
       }
     }
     if (!found) {
-      VLOG(1) << __FUNCTION__ << ": ERROR! An updated mojom anchor " \
+      VLOG(0) << __FUNCTION__ << ": ERROR! An updated mojom anchor " \
           "identifier has not been found among the cached anchors. This "\
           "shouldn't happen!";
+      exit(1);
     }
   }
 
   // VLOG(0) << "JUDAX: VRDisplay::OnAnchorsUpdated -> anchors.size() = " << anchors.size();
 
-  // TODO: HeapVector does not have empty or IsEmpty?
-  // if (anchors.size() != 0) {
-    dispatchEvent(VRAnchorEvent::create(
-      EventTypeNames::anchorsupdated, true, false, this, anchors));
-  // }
+  dispatchEvent(VRAnchorEvent::create(
+    EventTypeNames::anchorsupdated, true, false, this, anchors));
 }
 
 void VRDisplay::OnExitPresent() {

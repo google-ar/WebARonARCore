@@ -311,7 +311,7 @@ mojom::VRAnchorPtr TangoVRDevice::AddAnchor(
 }
 
 void TangoVRDevice::RemoveAnchor(uint32_t identifier) {
-  if (!TangoHandler::getInstance()->isConnected()) {
+  if (TangoHandler::getInstance()->isConnected()) {
     TangoHandler::getInstance()->removeAnchor(identifier);
   }
 }

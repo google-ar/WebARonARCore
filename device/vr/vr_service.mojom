@@ -141,12 +141,13 @@ interface VRDisplay {
   AddAnchor(array<float, 16> anchorModelMatrix) => (VRAnchor anchor);
   [Sync]
   GetMarkers(uint32 markerType, float markerSize) => (array<VRMarker> markers);
+  [Sync]
+  RemoveAnchor(uint32 identifier) => ();
 
   RequestPresent(bool secureOrigin) => (bool success);
   ExitPresent();
   SubmitFrame(VRPose? pose);
   UpdateLayerBounds(VRLayerBounds leftBounds, VRLayerBounds rightBounds);
-  RemoveAnchor(uint32 identifier);
 };
 
 interface VRDisplayClient {
