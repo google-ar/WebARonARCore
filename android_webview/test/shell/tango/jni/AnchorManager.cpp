@@ -26,10 +26,8 @@ std::shared_ptr<Anchor> AnchorManager::addAnchor(double timestamp,
 
 void AnchorManager::removeAnchor(uint32_t identifier) {
   anchorsMutex.lock();
-  std::unordered_map<uint32_t, std::shared_ptr<Anchor>>::iterator it = 
-      anchors.find(identifier);
-  if (it != anchors.end())
-  {
+  auto it = anchors.find(identifier);
+  if (it != anchors.end()) {
     anchors.erase(it);
   }
   anchorsMutex.unlock();
@@ -50,9 +48,7 @@ std::vector<std::shared_ptr<Anchor>> AnchorManager::update(
   // Iterate over all the anchors and try to update them. Each anchor's
   // timestamp will indicate if the anchor needs to be updated.
   anchorsMutex.lock();
-  std::unordered_map<uint32_t, std::shared_ptr<Anchor>>::const_iterator it =
-    anchors.begin();
-  for (; it != anchors.end(); it++) {
+  for (auto it = anchors.begin(); it != anchors.end(); it++) {
     std::shared_ptr<Anchor> anchor = it->second;
     // If the anchor was created anytime after the camera pose update time,
     // the anchor needs to be updated.

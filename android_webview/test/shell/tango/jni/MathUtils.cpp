@@ -6,12 +6,12 @@
 
 namespace tango_chromium {
 
-void matrixFrustum(float const & left,
-    float const & right,
-    float const & bottom,
-    float const & top,
-    float const & near,
-    float const & far,
+void matrixFrustum(const float& left,
+    const float& right,
+    const float& bottom,
+    const float& top,
+    const float& near,
+    const float& far,
     float* matrix) {
 
   float x = 2 * near / ( right - left );
