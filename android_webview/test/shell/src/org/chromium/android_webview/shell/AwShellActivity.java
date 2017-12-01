@@ -99,7 +99,8 @@ import com.google.atap.tangoservice.SupportedDevices;
 public class AwShellActivity extends Activity implements OnRequestPermissionsResultCallback {
     private static final String TAG = "cr.AwShellActivity";
     private static final String PREFERENCES_NAME = "AwShellPrefs";
-    private static final String INITIAL_URL = "https://developers.google.com/ar/develop/web/getting-started#examples";
+    private static final String INITIAL_URL =
+            "https://developers.google.com/ar/develop/web/getting-started#examples";
     private static final String LAST_USED_URL_PREFERENCE_NAME = "url";
     private static final int ADF_PERMISSION_ID = 2;
     private static final int CAMERA_ID = 0;
@@ -167,27 +168,23 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
         @Override
         public void onBeginningOfSpeech()
         {               
-            // System.out.println("SpeechRecognitionListener.onBeginningOfSpeech");
             dispatchEventToJSInterfaceInstance("speechstart", "{}");
         }
 
         @Override
         public void onBufferReceived(byte[] buffer)
         {
-            // System.out.println("SpeechRecognitionListener.onBufferReceived");
         }
 
         @Override
         public void onEndOfSpeech()
         {
-            // System.out.println("SpeechRecognitionListener.onEndOfSpeech");
             dispatchEventToJSInterfaceInstance("speechend", "{}");
          }
 
         @Override
         public void onError(int error)
         {
-            // System.out.println("SpeechRecognitionListener.onError: " + error);
             String errorString = "Unknown error.";
             switch(error)
             {
@@ -225,27 +222,22 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
         @Override
         public void onEvent(int eventType, Bundle params)
         {
-            // System.out.println("SpeechRecognitionListener.onEvent");
         }
 
         @Override
         public void onPartialResults(Bundle partialResults)
         {
-            // System.out.println("SpeechRecognitionListener.onPartialResults");
         }
 
         @Override
         public void onReadyForSpeech(Bundle params)
         {
-            // System.out.println("SpeechRecognitionListener.onReadyForSpeech");
-            dispatchEventToJSInterfaceInstance("start", 
-                "{}");
+            dispatchEventToJSInterfaceInstance("start", "{}");
         }
 
         @Override
         public void onResults(Bundle results)
         {
-            // System.out.println("SpeechRecognitionListener.onResults");
             ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             float[] confidences = results.getFloatArray(SpeechRecognizer.CONFIDENCE_SCORES);
             if (!matches.isEmpty())
@@ -289,7 +281,6 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
         @Override
         public void onRmsChanged(float rmsdB)
         {
-            // System.out.println("SpeechRecognitionListener.onRmsChanged");
         }
 
         @JavascriptInterface
@@ -412,7 +403,6 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
    @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) 
     {
-        System.out.println("onRequestPermissionsResult: " + requestCode + ", " + grantResults.length);
         if (requestCode == MULTIPLE_PERMISSIONS_REQUEST_CODE) 
         {
             boolean allPermissionsGranted = true;
@@ -670,7 +660,6 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
 
             @Override
             public void onShowCustomView(View view, WebChromeClient.CustomViewCallback callback) {
-                System.out.println("WebAR: onShowCustomView");
                 getWindow().setFlags(
                         WindowManager.LayoutParams.FLAG_FULLSCREEN,
                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -767,7 +756,28 @@ public class AwShellActivity extends Activity implements OnRequestPermissionsRes
     }
 
     private static String getUrlFromIntent(Intent intent) {
-        return intent != null ? intent.getDataString() : null;
+        String urlString = null;
+        if (intent != null) {
+            // If there is an intent, retrieve data sent over with the intent
+            Uri data = intent.getData();
+            urlString = intent.getDataString();
+            // If there is a url and the scheme was "webar", that means that
+            // a url is passed to be loaded.
+            if (data != null &&
+                    data.getScheme().
+                    toLowerCase(Locale.getDefault()).equals("webar")) {
+                // Remove the "webar://" sceheme from the url
+                urlString = urlString.substring(8);
+                // If the url lacks scheme, add http by default.
+                String urlStringLowerCase = urlString.toLowerCase(Locale.getDefault());
+                if (!urlStringLowerCase.contains("http://") &&
+                        !urlStringLowerCase.contains("https://") &&
+                        !urlStringLowerCase.contains("file://")) {
+                    urlString = "http://" + urlString;
+                }
+            }
+        }
+        return urlString;
     }
 
     private void setKeyboardVisibilityForUrl(boolean visible) {
