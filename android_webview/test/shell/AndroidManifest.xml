@@ -26,7 +26,7 @@
   <uses-permission android:name="android.permission.USE_CREDENTIALS" />
 
   <application android:name="org.chromium.android_webview.shell.AwShellApplication"
-      android:label="WebARCore"
+      android:label="WebARonARCore"
       android:hardwareAccelerated="true">
     <uses-library
       android:name="com.projecttango.libtango_device2"
