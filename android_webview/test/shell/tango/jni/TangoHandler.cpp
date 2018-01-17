@@ -867,22 +867,29 @@ bool TangoHandler::updateCameraImageIntoTexture(uint32_t textureId) {
   std::time(&lastTangoImagebufferTimestampTime);
 
   textureReaderMutex.lock();
-  if (!textureReaderInitialized || textureReaderTextureId != textureId)
-  {
-    if (textureReaderInitialized)
-    {
-      TextureReader_release();
-      cameraImageBuffer.data = 0;
-    }
-    TextureReader_initialize(textureId, 
-        GL_TEXTURE_EXTERNAL_OES, 
-        tangoCameraIntrinsics.width, 
-        tangoCameraIntrinsics.height, true);
-    textureReaderInitialized = true;
-    textureReaderTextureId = textureId;
-  }
 
   if (textureReadRequestCounter > 0) {
+
+    // If there has been a request to read the texture and the texture has
+    // not been initialized yet, do it. This resolves some issues with the
+    // texture reader not working on some S8 models if marker detection is
+    // not requested.
+    // TODO(ijamardo): Integrate the new version of the texture reader that is meant
+    // to resolve the issue once and for all.
+    if (!textureReaderInitialized || textureReaderTextureId != textureId)
+    {
+      if (textureReaderInitialized)
+      {
+        TextureReader_release();
+        cameraImageBuffer.data = 0;
+      }
+      TextureReader_initialize(textureId,
+          GL_TEXTURE_EXTERNAL_OES,
+          tangoCameraIntrinsics.width,
+          tangoCameraIntrinsics.height, true);
+      textureReaderInitialized = true;
+      textureReaderTextureId = textureId;
+    }
 
     int cameraImageBufferSize;
     cameraImageBuffer.data = TextureReader_readPixels(&cameraImageBufferSize, 
