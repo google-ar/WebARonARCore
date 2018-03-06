@@ -16,6 +16,8 @@ WebARonARCore is built on top of [Android ARCore APK](https://developers.google.
 * Google Pixel 2 or Pixel 2 XL
 * Samsung Galaxy S7, S7 edge, S8, S8+ or Note8
 * LGE V30 or V30+
+* ASUS Zenfone AR
+* OnePlus OnePlus 5
 
 Install the ARCore APK from the Google Play Store:
 
