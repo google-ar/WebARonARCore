@@ -12,14 +12,9 @@
 
 WebARonARCore is built on top of [Android ARCore APK](https://developers.google.com/ar), which requires [one of the officially-supported devices](https://developers.google.com/ar/discover/#supported_devices).
 
-Install the ARCore APK, either directly from a device:
+Install the ARCore APK from the Google Play Store:
 
-* Visit [this link](https://github.com/google-ar/arcore-android-sdk/releases/download/sdk-preview2/arcore-preview2.apk) from a web browser on your Android device to download and install the ARCore APK.
-
-...or by using ADB:
-
-* Download the ARCore APK to your computer from [here](https://github.com/google-ar/arcore-android-sdk/releases/download/sdk-preview2/arcore-preview2.apk) and install the APK to your device:
-  * `$ adb install -r path/to/arcore_preview2.apk`
+* Visit the [Google Play Store](https://play.google.com/store/apps/details?id=com.google.ar.core) and install ARCore.
 
 ### <a name="InstallTheWebARonARCoreAPK">2. Install the WebARonARCore APK</a>
 
@@ -110,7 +105,7 @@ WebARonARCore is built of two essential technologies: ARCore and Chromium. We al
 
 ## <a name="FutureWork">Future work</a>
 * Add more AR-related features.
-* Adapt the implementation to the WebVR 2.0 spec proposal.
+* Adapt the implementation to the [WebXR Device API](https://github.com/immersive-web/webxr) spec proposal.
 * Implement the prototype on full Chromium (not on the WebView flavor) and to a newer tag version (>57.0.2987.5).
 * Improve the VRPassThroughCamera rendering pipeline either making it obscure for the developer or by using regular WebGL textures and shader samplers without having to use the external image texture extension.
 
