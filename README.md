@@ -8,18 +8,18 @@
 
 ## Getting started
  
-### <a name="InstallingTheARCoreSDK">1. Install the ARCore APK</a>
+### <a name="InstallingTheARCoreSDK">1. Install the ARCore APK Developer Preview 1</a>
 
-WebARonARCore is built on top of [Android ARCore APK](https://developers.google.com/ar), which requires [one of the officially-supported devices](https://developers.google.com/ar/discover/#supported_devices).
+WebARonARCore is still built on top of the Android ARCore Developer Preview 1 APK and because of that, only a certain number of devices are supported officially: Google Pixel 1 and 2 (both standard and XL) and Samsung Galaxy S8. The check to only detect these devices at runtime has been removed but the behavior on other ARCore models (supported by newer ARCore versions) is undefined.
 
 Install the ARCore APK, either directly from a device:
 
-* Visit [this link](https://github.com/google-ar/arcore-android-sdk/releases/download/sdk-preview2/arcore-preview2.apk) from a web browser on your Android device to download and install the ARCore APK.
+* Visit [this link](https://github.com/google-ar/arcore-android-sdk/releases/download/sdk-preview/arcore-preview.apk) from a web browser on your Android device to download and install the ARCore Developer Preview 1 APK.
 
 ...or by using ADB:
 
-* Download the ARCore APK to your computer from [here](https://github.com/google-ar/arcore-android-sdk/releases/download/sdk-preview2/arcore-preview2.apk) and install the APK to your device:
-  * `$ adb install -r path/to/arcore_preview2.apk`
+* Download the ARCore Developer Preview 1 APK to your computer from [here](https://github.com/google-ar/arcore-android-sdk/releases/download/sdk-preview/arcore-preview.apk) and install the APK on your device:
+  * `$ adb install -r path/to/arcore_preview.apk`
 
 ### <a name="InstallTheWebARonARCoreAPK">2. Install the WebARonARCore APK</a>
 
@@ -104,15 +104,17 @@ The final APK will be built in the folders `~/chromium/src/apk` and `~/chromium/
 WebARonARCore is built of two essential technologies: ARCore and Chromium. We also extend the WebVR 1.1 API, which gives us much of what we need for augmented reality, with a few more essentials, such as motion tracking, rendering of the camera's video feed, and basic understanding of the real world. For details, see [WebVR API extension for smartphone AR](https://github.com/google-ar/three.ar.js/blob/master/webvr_ar_extension.md)
 
 ## <a name="KnownIssues">Known issues</a>
-* The current implementation of WebAR is built on top of the Chromium WebView flavor. This has some implementation advantages but some performance and use disadvantages. We are working on making the implementation on a full version of Chromium.
+* The current implementation of WebARonARCore is built on top of the Chromium WebView flavor. This has some implementation advantages but some performance and use disadvantages. We are working on making the implementation on a full version of Chromium.
+* The current implementarion of WebARonARCore is built on top of the ARCore Developer Preview version 1. This may lead to uncertain behavior in some devices that were not supported by that ARCore version.
 * Pausing/resuming/switching away from the app causes screen to turn black. This is a consequence of having built the implementation on top of the WebView flavor of Chromium. A proper implementation on full Chromium or a rebase to a more recent Chromium WebView version (>57.0.2987.5) might solve this problem.
 * The [Web Speech](https://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html) API is a standard web API for text to speech and speech to text conversion that is available in Chromium. As WebARonARCore is built on top of the WebView version of Chromium, does not provide this functionality by default. There is a solution though, using a polyfill we provide, but in order to use it, you need to either a) include the [three.ar.js](https://github.com/google-ar/three.ar.js) library before making any use of the Web Speech API or b) include the [ARSpeechRecognition.js](https://github.com/google-ar/three.ar.js/blob/master/src/ARSpeechRecognition.js) file also before making any reference to the Web Speech API. Only speech recognition is suspported, not speech synthesis for now.
 
 ## <a name="FutureWork">Future work</a>
 * Add more AR-related features.
-* Adapt the implementation to the WebVR 2.0 spec proposal.
+* Adapt the implementation to the WebXR spec proposal.
 * Implement the prototype on full Chromium (not on the WebView flavor) and to a newer tag version (>57.0.2987.5).
 * Improve the VRPassThroughCamera rendering pipeline either making it obscure for the developer or by using regular WebGL textures and shader samplers without having to use the external image texture extension.
+* Adapt the prototype to the latest ARCore.
 
 ## <a name="License">License</a>
 Apache License Version 2.0 (see the `LICENSE` file inside this repo).
