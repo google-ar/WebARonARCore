@@ -64,12 +64,15 @@ We recommend the following steps:
 3. Create a folder to contain `chromium` and move to it: `$ mkdir ~/chromium && cd ~/chromium`
 4. Checkout the Chromium repo: `~/chromium$ fetch --nohooks android`. **Note**: This process may take a long time (an hour?)
 5. Enter the `src` folder: `$ cd src`.
-6. Add this git repo as a remote (we are going to call it 'github'): `git remote add github https://github.com/google-ar/WebARonARCore.git`
-7. Fetch the newly added remote: `git fetch github`
-8. Checkout the webarcore branch from the github remote: `git checkout --track github/webarcore_57.0.2987.5`
-9. Synchronize the dependencies with this command: `~/chromium/src$ gclient sync --disable-syntax-validation`. **Note**: This process may take some time too.
-10. Create a folder where to make the final product compilation: `~/chromium/src$ mkdir -p out/build`.
-11. Create and edit a new file `out/build/args.gn`. Copy and paste the following content in the `args.gn` file:
+6. Download the dependencies: `$ gclient sync`. **Note**: This process may take some time too.
+7. Install the build dependencies: `~/chromium/src$ build/install-build-deps-android.sh`
+8. Setup the environment: `~/chromium/src$ . build/android/envsetup.sh`
+9. Add this git repo as a remote (we are going to call it 'github'): `git remote add github https://github.com/google-ar/WebARonARCore.git`
+10. Fetch the newly added remote: `git fetch github`
+11. Checkout the webarcore branch from the github remote: `git checkout --track github/webarcore_57.0.2987.5`
+12. Synchronize the dependencies with this command: `~/chromium/src$ gclient sync --disable-syntax-validation`. **Note**: This process may take some time too.
+13. Create a folder where to make the final product compilation: `~/chromium/src$ mkdir -p out/build`.
+14. Create and edit a new file `out/build/args.gn`. Copy and paste the following content in the `args.gn` file:
 ```
   target_os = "android"
   target_cpu = "arm64"
@@ -81,10 +84,7 @@ We recommend the following steps:
   enable_nacl = false
   remove_webcore_debug_symbols = true
 ```
-12. Prepare to build: `~/chromium/src$ gn args out/build`. **Note**: once the command is executed, the vi editor will show you the content of the `args.gn` file just edited a few steps before. Just exit by pressing ESC and typing colon and `x`.
-13. Install the build dependencies: `~/chromium/src$ build/install-build-deps-android.sh`
-14. Synchronize the resources once again: `~/chromium/src$ gclient sync --disable-syntax-validation`
-15. Setup the environment: `~/chromium/src$ . build/android/envsetup.sh`
+15. Prepare to build: `~/chromium/src$ gn args out/build`. **Note**: once the command is executed, the vi editor will show you the content of the `args.gn` file just edited a few steps before. Just exit by pressing ESC and typing colon and `x`.
 
 ##### Build, install and run
 
